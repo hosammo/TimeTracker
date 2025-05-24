@@ -21,20 +21,64 @@
 <div class="container py-4">
     <h2 class="text-center mb-4">⏱ Live Time Tracker</h2>
 
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
     {% if running_entry %}
     <div class="card shadow-sm border-success mb-4">
         <div class="card-body">
             <h5 class="card-title text-success">🔴 Tracking Now</h5>
-            <p><strong>Project:</strong> {{ running_entry.project.name }}</p>
-            <p><strong>Description:</strong> {{ running_entry.description }}</p>
+            {% if running_entry.project %}
+                <p><strong>Project:</strong> {{ running_entry.project.name }}</p>
+                <p><strong>Task:</strong> {{ running_entry.task.name|default:"No task" }}</p>
+            {% else %}
+                <p class="text-warning"><strong>⚠️ No project selected yet</strong></p>
+            {% endif %}
+            <p><strong>Description:</strong> {{ running_entry.description|default:"No description" }}</p>
             <p><small>Started at: {{ running_entry.start_time }}</small></p>
             <p><strong>Elapsed:</strong> <span id="live-timer">--:--:--</span></p>
-            <div class="progress mb-2">
+            <div class="progress mb-3">
               <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            <form method="post" action="{% url 'stop_timer' running_entry.id %}">
+            
+            <!-- Stop Timer Form -->
+            <form method="post" action="{% url 'stop_timer' running_entry.id %}" class="mt-3">
                 {% csrf_token %}
-                <button class="btn btn-danger">Stop Timer</button>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label for="id_project" class="form-label">Project <span class="text-danger">*</span></label>
+                        <select name="project" id="id_project" class="form-select" required
+                            hx-get="{% url 'tasks_by_project' %}" hx-target="#id_task" hx-trigger="change">
+                            <option value="">Select Project</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}" {% if running_entry.project.id == project.id %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="id_task" class="form-label">Task</label>
+                        <select name="task" id="id_task" class="form-select">
+                            <option value="">Select Task (Optional)</option>
+                            {% for task in tasks %}
+                                <option value="{{ task.id }}" {% if running_entry.task.id == task.id %}selected{% endif %}>
+                                    {{ task.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="id_description" class="form-label">Description</label>
+                        <input type="text" name="description" id="id_description" class="form-control" 
+                               value="{{ running_entry.description }}" placeholder="What did you work on?">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger">Stop Timer & Save</button>
             </form>
         </div>
     </div>
@@ -52,34 +96,17 @@
     {% else %}
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <h5 class="card-title">▶️ Start New Timer</h5>
+            <h5 class="card-title">▶️ Quick Start Timer</h5>
             <form method="post" action="{% url 'start_timer' %}" class="row g-2">
                 {% csrf_token %}
-                <div class="col-md-3">
-                    <select name="project" id="project-select" class="form-select" required
-                        hx-get="{% url 'tasks_by_project' %}" hx-target="#task-select" hx-trigger="change" hx-include="[name='project']">
-                        <option value="">Select Project</option>
-                        {% for project in projects %}
-                            <option value="{{ project.id }}">{{ project.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <a href="#" class="small d-block mt-1" data-bs-toggle="modal" data-bs-target="#addProjectModal">+ Add Project</a>
-                </div>
-                <div class="col-md-3">
-                    <select name="task" id="task-select" class="form-select">
-                        {% for task in tasks %}
-                            <option value="{{ task.id }}">{{ task.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <a href="#" class="small d-block mt-1" data-bs-toggle="modal" data-bs-target="#addTaskModal">+ Add Task</a>
+                <div class="col-md-8">
+                    <input name="description" class="form-control" placeholder="What are you working on? (optional)">
                 </div>
                 <div class="col-md-4">
-                    <input name="description" class="form-control" placeholder="What are you working on?" required>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary w-100">Start</button>
+                    <button class="btn btn-primary w-100">Start Timer</button>
                 </div>
             </form>
+            <p class="text-muted mt-2 mb-0"><small>💡 You can select project and task when stopping the timer</small></p>
         </div>
     </div>
     {% endif %}
@@ -102,18 +129,21 @@
                     <th>Description</th>
                     <th>Start</th>
                     <th>End</th>
+                    <th>Duration</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             {% for entry in group.list %}
                 <tr>
-                    <td>{{ entry.project.name }}</td>
-                    <td>{{ entry.task.name }}</td>
-                    <td>{{ entry.description }}</td>
-                    <td>{{ entry.start_time }}</td>
-                    <td>{{ entry.end_time }}</td>
+                    <td>{{ entry.project.name|default:"No project" }}</td>
+                    <td>{{ entry.task.name|default:"-" }}</td>
+                    <td>{{ entry.description|default:"-" }}</td>
+                    <td>{{ entry.start_time|date:"g:i A" }}</td>
+                    <td>{{ entry.end_time|date:"g:i A" }}</td>
+                    <td>{{ entry.duration_minutes }} min</td>
                     <td>
+                        {% if entry.project %}
                         <form method="post" action="{% url 'continue_entry' entry.id %}" class="d-inline">
                             {% csrf_token %}
                             <button class="btn btn-outline-success btn-sm">Continue</button>
@@ -122,6 +152,7 @@
                             {% csrf_token %}
                             <button class="btn btn-outline-secondary btn-sm">Duplicate</button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
@@ -130,7 +161,7 @@
     {% endfor %}
 </div>
 
-<!-- Modals -->
+<!-- Manual Entry Modal -->
 <div class="modal fade" id="manualEntryModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -138,7 +169,7 @@
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title">➕ Manual Time Entry</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           {{ form.as_p }}
@@ -151,52 +182,54 @@
   </div>
 </div>
 
+<!-- Add Project Modal -->
 <div class="modal fade" id="addProjectModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" hx-post="{% url 'ajax_add_project' %}" hx-target="#project-select" hx-swap="outerHTML">
+      <form method="post" hx-post="{% url 'ajax_add_project' %}" hx-target="#id_project" hx-swap="outerHTML">
         {% csrf_token %}
         <div class="modal-header"><h5 class="modal-title">➕ Add Project</h5></div>
-          <div class="modal-body">
-              <select name="client_id" class="form-select" required>
-                  {% for client in clients %}
-                      <option value="{{ client.id }}">{{ client.name }}</option>
-                  {% endfor %}
-              </select>
-              <br>
-              <input name="name" class="form-control" placeholder="Project Name" required>
-          </div>
-          <div class="modal-footer">
-              <button type="submit" class="btn btn-primary">Save</button>
-          </div>
+        <div class="modal-body">
+            <select name="client_id" class="form-select mb-3" required>
+                <option value="">Select Client</option>
+                {% for client in clients %}
+                    <option value="{{ client.id }}">{{ client.name }}</option>
+                {% endfor %}
+            </select>
+            <input name="name" class="form-control" placeholder="Project Name" required>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
       </form>
     </div>
   </div>
 </div>
 
+<!-- Add Task Modal -->
 <div class="modal fade" id="addTaskModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-<form method="post" hx-post="{% url 'ajax_add_task' %}" hx-target="#task-select" hx-swap="outerHTML">
-    {% csrf_token %}
-    <div class="modal-header"><h5 class="modal-title">➕ Add Task</h5></div>
-    <div class="modal-body">
-        <div class="mb-3">
-            <input name="name" class="form-control" placeholder="Task Name" required>
+      <form method="post" hx-post="{% url 'ajax_add_task' %}" hx-target="#id_task" hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="modal-header"><h5 class="modal-title">➕ Add Task</h5></div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <input name="name" class="form-control" placeholder="Task Name" required>
+            </div>
+            <div class="mb-3">
+                <label for="project_id" class="form-label">Project</label>
+                <select name="project_id" id="project_id" class="form-select" required>
+                    {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="project_id" class="form-label">Project</label>
-            <select name="project_id" id="project_id" class="form-select" required>
-                {% for project in projects %}
-                    <option value="{{ project.id }}">{{ project.name }}</option>
-                {% endfor %}
-            </select>
+        <div class="modal-footer">
+            <button class="btn btn-primary">Save</button>
         </div>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary">Save</button>
-    </div>
-</form>
+      </form>
     </div>
   </div>
 </div>

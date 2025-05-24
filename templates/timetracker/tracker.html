@@ -170,6 +170,14 @@
                     <td>{{ entry.end_time|date:"g:i A" }}</td>
                     <td>{{ entry.duration_minutes }} min</td>
                     <td>
+                        <button class="btn btn-outline-primary btn-sm" 
+                                hx-get="{% url 'edit_entry' entry.id %}"
+                                hx-target="#editModal .modal-content"
+                                hx-trigger="click"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal">
+                            ✏️ Edit
+                        </button>
                         {% if entry.project %}
                         <form method="post" action="{% url 'continue_entry' entry.id %}" class="d-inline">
                             {% csrf_token %}
@@ -257,6 +265,15 @@
             <button class="btn btn-primary">Save</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Entry Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Content will be loaded here via HTMX -->
     </div>
   </div>
 </div>

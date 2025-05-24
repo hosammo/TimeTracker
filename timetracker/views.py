@@ -8,6 +8,7 @@ from projects.models import Project, Task
 from core.models import Client, Workspace
 from timetracker.forms import ManualEntryForm, StopTimerForm
 import pytz
+from datetime import datetime
 
 
 def tracker_home(request):
@@ -204,4 +205,49 @@ def ajax_add_task(request):
     return render(request, "timetracker/partials/task_options.html", {
         "tasks": Task.objects.filter(project_id=project_id,
                                      is_active=True) if project_id and project_id.isdigit() else []
+    })
+
+
+def edit_entry(request, entry_id):
+    entry = get_object_or_404(TimeEntry, pk=entry_id)
+
+    if request.method == "POST":
+        # Update entry fields
+        entry.project_id = request.POST.get('project')
+        entry.task_id = request.POST.get('task') or None
+        entry.description = request.POST.get('description', '')
+
+        # Parse datetime inputs
+        start_date = request.POST.get('start_date')
+        start_time = request.POST.get('start_time')
+        end_date = request.POST.get('end_date')
+        end_time = request.POST.get('end_time')
+
+        # Get timezone from first workspace or use UTC
+        workspace = Workspace.objects.first()
+        tz = pytz.timezone(workspace.timezone) if workspace and hasattr(workspace, 'timezone') else pytz.UTC
+
+        if start_date and start_time:
+            naive_start = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            entry.start_time = tz.localize(naive_start)
+
+        if end_date and end_time:
+            naive_end = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
+            entry.end_time = tz.localize(naive_end)
+
+        entry.billable = request.POST.get('billable') == 'on'
+        hourly_rate = request.POST.get('hourly_rate', '0')
+        entry.hourly_rate = float(hourly_rate) if hourly_rate else 0
+
+        entry.save()
+        return redirect('tracker_home')
+
+    # For GET request, return the edit form
+    projects = Project.objects.filter(archived=False)
+    tasks = Task.objects.filter(project=entry.project, is_active=True) if entry.project else []
+
+    return render(request, 'timetracker/partials/edit_entry_form.html', {
+        'entry': entry,
+        'projects': projects,
+        'tasks': tasks,
     })

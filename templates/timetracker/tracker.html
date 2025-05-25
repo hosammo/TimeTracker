@@ -5,28 +5,28 @@
     <li class="breadcrumb-item active">Time Tracker</li>
 {% endblock %}
 
+{% block extra_head %}
+<style>
+    [x-cloak] { display: none !important; }
+    .form-select option[value="new"] {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-{% load static %}
-<!DOCTYPE html>
-<html lang="en" x-data>
-<head>
-    <meta charset="UTF-8">
-    <title>Time Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <script src="https://unpkg.com/alpinejs" defer></script>
-    <style>
-        [x-cloak] { display: none !important; }
-        .form-select option[value="new"] {
-            font-weight: bold;
-            color: #0d6efd;
-        }
-    </style>
-</head>
-<body>
-<div class="container py-4">
+<div class="py-4">
     <h2 class="text-center mb-4">⏱ Live Time Tracker</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
     {% if error %}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -63,7 +63,7 @@
                             x-on:change="if($event.target.value === 'new') { showNewProject = true; } else { showNewProject = false; showNewTask = false; }">
                             <option value="">Select Project</option>
                             {% for project in projects %}
-                                <option value="{{ project.id }}" {% if running_entry.project.id == project.id %}selected{% endif %}>
+                                <option value="{{ project.id }}" {% if running_entry.project and running_entry.project.id == project.id %}selected{% endif %}>
                                     {{ project.name }}
                                 </option>
                             {% endfor %}
@@ -87,7 +87,7 @@
                             x-on:change="if($event.target.value === 'new') { showNewTask = true; } else { showNewTask = false; }">
                             <option value="">Select Task (Optional)</option>
                             {% for task in tasks %}
-                                <option value="{{ task.id }}" {% if running_entry.task.id == task.id %}selected{% endif %}>
+                                <option value="{{ task.id }}" {% if running_entry.task and running_entry.task.id == task.id %}selected{% endif %}>
                                     {{ task.name }}
                                 </option>
                             {% endfor %}
@@ -109,17 +109,6 @@
             </form>
         </div>
     </div>
-    <script>
-        const start = new Date("{{ running_entry.start_time|date:'Y-m-d H:i:s' }}");
-        setInterval(() => {
-            const now = new Date();
-            const diff = Math.floor((now - start) / 1000);
-            const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
-            const min = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-            const sec = String(diff % 60).padStart(2, '0');
-            document.getElementById('live-timer').textContent = `${hrs}:${min}:${sec}`;
-        }, 1000);
-    </script>
     {% else %}
     <div class="card shadow-sm mb-4">
         <div class="card-body">
@@ -140,9 +129,14 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4>🕒 Recent Entries</h4>
-        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#manualEntryModal">
-            ➕ Add Manually
-        </button>
+        <div>
+            <a href="{% url 'deleted_entries' %}" class="btn btn-outline-warning btn-sm me-2">
+                🗑️ Deleted Entries
+            </a>
+            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#manualEntryModal">
+                ➕ Add Manually
+            </button>
+        </div>
     </div>
 
     {% regroup past_entries by start_time.date as date_groups %}
@@ -188,6 +182,13 @@
                             <button class="btn btn-outline-secondary btn-sm">Duplicate</button>
                         </form>
                         {% endif %}
+                        <button class="btn btn-outline-danger btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal"
+                                data-entry-id="{{ entry.id }}"
+                                data-entry-description="{{ entry.description|default:'this entry' }}">
+                            🗑️ Delete
+                        </button>
                     </td>
                 </tr>
             {% endfor %}
@@ -217,54 +218,25 @@
   </div>
 </div>
 
-<!-- Add Project Modal -->
-<div class="modal fade" id="addProjectModal" tabindex="-1">
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" hx-post="{% url 'ajax_add_project' %}" hx-target="#id_project" hx-swap="outerHTML">
-        {% csrf_token %}
-        <div class="modal-header"><h5 class="modal-title">➕ Add Project</h5></div>
-        <div class="modal-body">
-            <select name="client_id" class="form-select mb-3" required>
-                <option value="">Select Client</option>
-                {% for client in clients %}
-                    <option value="{{ client.id }}">{{ client.name }}</option>
-                {% endfor %}
-            </select>
-            <input name="name" class="form-control" placeholder="Project Name" required>
-        </div>
-        <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Add Task Modal -->
-<div class="modal fade" id="addTaskModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" hx-post="{% url 'ajax_add_task' %}" hx-target="#id_task" hx-swap="outerHTML">
-        {% csrf_token %}
-        <div class="modal-header"><h5 class="modal-title">➕ Add Task</h5></div>
-        <div class="modal-body">
-            <div class="mb-3">
-                <input name="name" class="form-control" placeholder="Task Name" required>
-            </div>
-            <div class="mb-3">
-                <label for="project_id" class="form-label">Project</label>
-                <select name="project_id" id="project_id" class="form-select" required>
-                    {% for project in projects %}
-                        <option value="{{ project.id }}">{{ project.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-primary">Save</button>
-        </div>
-      </form>
+      <div class="modal-header">
+        <h5 class="modal-title">🗑️ Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="entryDescription">this entry</strong>?</p>
+        <p class="text-muted">Don't worry, this is a soft delete - you can restore it later from the deleted entries page.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Delete Entry</button>
+        </form>
+      </div>
     </div>
   </div>
 </div>
@@ -277,6 +249,40 @@
     </div>
   </div>
 </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Handle delete modal
+const deleteModal = document.getElementById('deleteModal');
+if (deleteModal) {
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const entryId = button.getAttribute('data-entry-id');
+        const entryDescription = button.getAttribute('data-entry-description');
+        
+        const form = deleteModal.querySelector('#deleteForm');
+        const descriptionSpan = deleteModal.querySelector('#entryDescription');
+        
+        form.action = `/tracker/delete/${entryId}/`;
+        descriptionSpan.textContent = entryDescription;
+    });
+}
+
+{% if running_entry %}
+// Live timer
+const start = new Date("{{ running_entry.start_time|date:'Y-m-d H:i:s' }}");
+setInterval(() => {
+    const now = new Date();
+    const diff = Math.floor((now - start) / 1000);
+    const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+    const min = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+    const sec = String(diff % 60).padStart(2, '0');
+    const timerElement = document.getElementById('live-timer');
+    if (timerElement) {
+        timerElement.textContent = `${hrs}:${min}:${sec}`;
+    }
+}, 1000);
+{% endif %}
+</script>
 {% endblock %}

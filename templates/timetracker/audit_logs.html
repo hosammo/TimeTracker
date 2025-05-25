@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}Audit Logs{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'tracker_home' %}">Time Tracker</a></li>
+    <li class="breadcrumb-item active">Audit Logs</li>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .action-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .log-details {
+        font-size: 0.85rem;
+    }
+    .json-display {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        font-family: monospace;
+        font-size: 0.8rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Time Entry Audit Logs</h2>
+        <a href="{% url 'tracker_home' %}" class="btn btn-outline-primary">
+            ← Back to Tracker
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">🔍 Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="action" class="form-label">Action</label>
+                    <select name="action" id="action" class="form-select">
+                        <option value="">All Actions</option>
+                        {% for value, label in actions %}
+                        <option value="{{ value }}" {% if current_filters.action == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="user" class="form-label">User</label>
+                    <select name="user" id="user" class="form-select">
+                        <option value="">All Users</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if current_filters.user == user.id|stringformat:"s" %}selected{% endif %}>
+                            {{ user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ current_filters.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ current_filters.date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                        <a href="{% url 'audit_logs' %}" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    {% if page_obj.paginator.count > 0 %}
+    <div class="alert alert-info">
+        <strong>{{ page_obj.paginator.count }}</strong> log entries found.
+        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }}.
+    </div>
+    {% endif %}
+
+    <!-- Audit Logs -->
+    {% if page_obj %}
+        {% for log in page_obj %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge action-badge 
+                                {% if log.action == 'CREATE' %}bg-success
+                                {% elif log.action == 'UPDATE' %}bg-warning
+                                {% elif log.action == 'DELETE' %}bg-danger
+                                {% elif log.action == 'RESTORE' %}bg-info
+                                {% elif log.action == 'START_TIMER' %}bg-primary
+                                {% elif log.action == 'STOP_TIMER' %}bg-secondary
+                                {% else %}bg-light text-dark
+                                {% endif %}">
+                                {{ log.get_action_display }}
+                            </span>
+                            <strong class="ms-2">TimeEntry #{{ log.time_entry.id }}</strong>
+                        </div>
+                        
+                        <div class="log-details">
+                            <p class="mb-1">
+                                <strong>User:</strong> 
+                                {% if log.user %}
+                                    {{ log.user.username }}
+                                {% else %}
+                                    <span class="text-muted">Anonymous</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Timestamp:</strong> {{ log.timestamp|date:"M d, Y g:i:s A" }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>IP Address:</strong> {{ log.ip_address|default:"N/A" }}
+                            </p>
+                            {% if log.notes %}
+                            <p class="mb-1">
+                                <strong>Notes:</strong> {{ log.notes }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="log-details">
+                            <p class="mb-1"><strong>Session:</strong> {{ log.session_key|default:"N/A"|truncatechars:15 }}</p>
+                            <p class="mb-1"><strong>User Agent:</strong> {{ log.user_agent|default:"N/A"|truncatechars:30 }}</p>
+                        </div>
+                        
+                        {% if log.previous_values or log.current_values %}
+                        <button class="btn btn-outline-info btn-sm" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#details-{{ log.id }}" aria-expanded="false">
+                            📋 Show Details
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if log.previous_values or log.current_values %}
+                <div class="collapse mt-3" id="details-{{ log.id }}">
+                    <div class="row">
+                        {% if log.previous_values %}
+                        <div class="col-md-6">
+                            <h6>Previous Values:</h6>
+                            <div class="json-display">
+                                <pre>{{ log.previous_values|pprint }}</pre>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if log.current_values %}
+                        <div class="col-md-6">
+                            <h6>Current Values:</h6>
+                            <div class="json-display">
+                                <pre>{{ log.current_values|pprint }}</pre>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Audit logs pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-journal-text" style="font-size: 4rem; color: #6c757d;"></i>
+                </div>
+                <h4 class="text-muted">No Audit Logs Found</h4>
+                <p class="text-muted">No activities have been logged yet or your filters returned no results.</p>
+                <a href="{% url 'tracker_home' %}" class="btn btn-primary">
+                    Go to Time Tracker
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
+{% endblock %}

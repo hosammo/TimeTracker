@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Deleted Entries{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{% url 'tracker_home' %}">Time Tracker</a></li>
+    <li class="breadcrumb-item active">Deleted Entries</li>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🗑️ Deleted Time Entries</h2>
+        <a href="{% url 'tracker_home' %}" class="btn btn-outline-primary">
+            ← Back to Tracker
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if deleted_entries %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>Note:</strong> These entries have been soft-deleted and can be restored. 
+            You can restore individual entries or they will remain here until permanently deleted.
+        </div>
+
+        {% regroup deleted_entries by deleted_at.date as date_groups %}
+        {% for group in date_groups %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Deleted on {{ group.grouper }}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Project</th>
+                                <th>Task</th>
+                                <th>Description</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Duration</th>
+                                <th>Deleted At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for entry in group.list %}
+                            <tr class="table-secondary">
+                                <td>{{ entry.project.name|default:"No project" }}</td>
+                                <td>{{ entry.task.name|default:"-" }}</td>
+                                <td>{{ entry.description|default:"-" }}</td>
+                                <td>{{ entry.start_time|date:"M d, Y g:i A" }}</td>
+                                <td>{{ entry.end_time|date:"M d, Y g:i A"|default:"-" }}</td>
+                                <td>
+                                    {% if entry.end_time %}
+                                        {{ entry.duration_minutes }} min
+                                    {% else %}
+                                        <span class="text-muted">Incomplete</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ entry.deleted_at|date:"M d, Y g:i A" }}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#restoreModal"
+                                            data-entry-id="{{ entry.id }}"
+                                            data-entry-description="{{ entry.description|default:'this entry' }}">
+                                        ↩️ Restore
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-trash" style="font-size: 4rem; color: #6c757d;"></i>
+                </div>
+                <h4 class="text-muted">No Deleted Entries</h4>
+                <p class="text-muted">You haven't deleted any time entries yet.</p>
+                <a href="{% url 'tracker_home' %}" class="btn btn-primary">
+                    Go to Time Tracker
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">↩️ Confirm Restore</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to restore <strong id="restoreEntryDescription">this entry</strong>?</p>
+        <p class="text-muted">The entry will be moved back to your active time entries.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="restoreForm" method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">Restore Entry</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Handle restore modal
+const restoreModal = document.getElementById('restoreModal');
+restoreModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const entryId = button.getAttribute('data-entry-id');
+    const entryDescription = button.getAttribute('data-entry-description');
+    
+    const form = restoreModal.querySelector('#restoreForm');
+    const descriptionSpan = restoreModal.querySelector('#restoreEntryDescription');
+    
+    form.action = `/tracker/restore/${entryId}/`;
+    descriptionSpan.textContent = entryDescription;
+});
+</script>
+</body>
+</html>
+{% endblock %}

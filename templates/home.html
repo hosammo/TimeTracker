@@ -1,440 +1,303 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Dashboard - MyTimerApp{% endblock %}
 
-{% block breadcrumb_items %}
-    <!-- No breadcrumbs on homepage for cleaner look -->
-{% endblock %}
-
-{% block extra_head %}
-<style>
-    /* Custom CSS for modern design */
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 3rem 0;
-        margin: -1.5rem -15px 2rem -15px;
-        border-radius: 0 0 20px 20px;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        border: none;
-        height: 100%;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    }
-
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        line-height: 1;
-    }
-
-    .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .quick-actions {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin: 2rem 0;
-    }
-
-    .action-btn {
-        background: white;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem;
-        text-decoration: none;
-        color: #495057;
-        transition: all 0.3s ease;
-        display: block;
-        text-align: center;
-    }
-
-    .action-btn:hover {
-        border-color: #667eea;
-        color: #667eea;
-        transform: scale(1.02);
-        text-decoration: none;
-    }
-
-    .running-timer {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(56, 239, 125, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0); }
-    }
-
-    .project-card, .task-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid #667eea;
-        transition: all 0.2s ease;
-    }
-
-    .project-card:hover, .task-card:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transform: translateX(5px);
-    }
-
-    .recent-entries-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
-
-    .table thead th {
-        background: #667eea;
-        color: white;
-        border: none;
-        font-weight: 600;
-        padding: 1rem;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background: #f8f9fa;
-        transform: scale(1.01);
-    }
-
-    .progress-modern {
-        height: 8px;
-        border-radius: 10px;
-        background: #e9ecef;
-    }
-
-    .progress-modern .progress-bar {
-        border-radius: 10px;
-    }
-
-    .welcome-text {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        margin-bottom: 2rem;
-    }
-
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: #2c3e50;
-        position: relative;
-        padding-left: 20px;
-    }
-
-    .section-title:before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-
-    @media (max-width: 768px) {
-        .hero-section {
-            padding: 2rem 0;
-            margin: -1.5rem -15px 1rem -15px;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-        }
-
-        .stat-card {
-            margin-bottom: 1rem;
-        }
-    }
-</style>
-{% endblock %}
-
-{% block breadcrumbs %}
-    <!-- Remove breadcrumbs for cleaner homepage -->
-{% endblock %}
-
 {% block content %}
-<!-- Hero Section -->
-<div class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-3">Welcome to MyTimerApp</h1>
-                <p class="welcome-text">Track your time efficiently, manage projects seamlessly, and boost your productivity with our comprehensive time tracking solution.</p>
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-speedometer2 me-2 text-primary"></i>
+                    Dashboard
+                </h1>
+                <p class="text-muted mb-0">Welcome back! Here's your time tracking overview.</p>
             </div>
-            <div class="col-lg-4 text-center">
-                <div style="font-size: 5rem; opacity: 0.8;">⏱️</div>
+            <div>
+                <a href="/tracker/" class="btn btn-primary">
+                    <i class="bi bi-play-circle me-2"></i>Start Tracking
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-<div class="container">
-    <!-- Running Timer Alert -->
-    {% if running_entry %}
-    <div class="running-timer">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h5 class="mb-2">🔴 Currently Tracking</h5>
-                <h4 class="fw-bold">{{ running_entry.project.name|default:"Untitled Project" }}</h4>
-                <p class="mb-2">{{ running_entry.description|default:"No description" }}</p>
-                <small>Started at {{ running_entry.start_time|date:"g:i A" }}</small>
-            </div>
-            <div class="col-md-4 text-center">
-                <div id="live-timer" style="font-size: 2rem; font-weight: bold;">--:--:--</div>
-                <a href="{% url 'tracker_home' %}" class="btn btn-light btn-sm mt-2">
-                    Manage Timer
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-                    ⏱️
-                </div>
-                <h3 class="stat-number text-primary">{{ total_hours }}</h3>
-                <p class="stat-label">Hours Today</p>
-                <div class="progress-modern mt-3">
-                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ total_hours|floatformat:0|add:"0" }}%"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white;">
-                    📁
-                </div>
-                <h3 class="stat-number text-success">{{ active_projects.count }}</h3>
-                <p class="stat-label">Active Projects</p>
-                <small class="text-muted">{{ top_projects.count }} recently used</small>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #ffeaa7, #fab1a0); color: #2d3436;">
-                    ✅
-                </div>
-                <h3 class="stat-number text-warning">{{ active_tasks }}</h3>
-                <p class="stat-label">Active Tasks</p>
-                <small class="text-muted">{{ inactive_tasks }} completed</small>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #fd79a8, #fdcb6e); color: white;">
-                    📊
-                </div>
-                <h3 class="stat-number text-info">{{ recent_entries.count }}</h3>
-                <p class="stat-label">Recent Entries</p>
-                <small class="text-muted">Last 5 activities</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h4 class="mb-3 text-center">⚡ Quick Actions</h4>
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-3">
-                <a href="{% url 'tracker_home' %}" class="action-btn">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">⏱️</div>
-                    <strong>Start Timer</strong>
-                    <br><small>Begin tracking time</small>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <a href="{% url 'project_list' %}" class="action-btn">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📁</div>
-                    <strong>Manage Projects</strong>
-                    <br><small>Create & organize</small>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <a href="{% url 'client_list' %}" class="action-btn">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
-                    <strong>Manage Clients</strong>
-                    <br><small>Client database</small>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <a href="/admin/" class="action-btn">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚙️</div>
-                    <strong>Admin Panel</strong>
-                    <br><small>System settings</small>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Projects and Tasks Overview -->
-    <div class="row mb-4">
-        <div class="col-lg-6">
-            <h3 class="section-title">📁 Top Projects</h3>
-            <div class="bg-white rounded p-3" style="box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-                {% for project in top_projects %}
-                <div class="project-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1 fw-bold">{{ project.name }}</h6>
-                            <small class="text-muted">Client: {{ project.client.name }}</small>
-                        </div>
-                        <div>
-                            <span class="badge" style="background-color: {{ project.color }}; color: white;">
-                                Active
-                            </span>
-                        </div>
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-clock-history fs-1 opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1 text-white-50">Today's Time</h6>
+                        <h3 class="mb-0">{{ total_hours }} hrs</h3>
+                        <small class="text-white-50">Across all projects</small>
                     </div>
                 </div>
-                {% empty %}
-                <div class="text-center text-muted py-4">
-                    <div style="font-size: 3rem; opacity: 0.3;">📁</div>
-                    <p>No projects yet. <a href="{% url 'project_list' %}">Create your first project</a></p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="col-lg-6">
-            <h3 class="section-title">✅ Priority Tasks</h3>
-            <div class="bg-white rounded p-3" style="box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
-                {% for task in top_tasks %}
-                <div class="task-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1 fw-bold">{{ task.name }}</h6>
-                            <small class="text-muted">{{ task.project.name }} • {{ task.estimated_minutes }} min</small>
-                        </div>
-                        <div>
-                            {% if task.is_active %}
-                                <span class="badge bg-success">Active</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="text-center text-muted py-4">
-                    <div style="font-size: 3rem; opacity: 0.3;">✅</div>
-                    <p>No tasks yet. <a href="{% url 'task_list' %}">Create your first task</a></p>
-                </div>
-                {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Recent Time Entries -->
-    <div class="mb-4">
-        <h3 class="section-title">🕒 Recent Time Entries</h3>
-        <div class="recent-entries-table">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Project</th>
-                        <th>Task</th>
-                        <th>Description</th>
-                        <th>Duration</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for entry in recent_entries %}
-                    <tr>
-                        <td>
-                            <strong>{{ entry.project.name|default:"No Project" }}</strong>
-                            {% if entry.project.client %}
-                                <br><small class="text-muted">{{ entry.project.client.name }}</small>
-                            {% endif %}
-                        </td>
-                        <td>{{ entry.task.name|default:"-" }}</td>
-                        <td>{{ entry.description|default:"-"|truncatechars:50 }}</td>
-                        <td>
-                            <span class="badge bg-primary">{{ entry.duration_minutes }} min</span>
-                        </td>
-                        <td>
-                            <small>{{ entry.start_time|date:"M d, Y" }}<br>{{ entry.start_time|date:"g:i A" }}</small>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-4">
-                            <div style="font-size: 3rem; opacity: 0.3;">🕒</div>
-                            <p class="text-muted mb-0">No time entries yet. <a href="{% url 'tracker_home' %}">Start your first timer</a></p>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 {% if running_entry %}bg-success{% else %}bg-secondary{% endif %} text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-{% if running_entry %}record-circle{% else %}stop-circle{% endif %} fs-1 opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1 text-white-50">Timer Status</h6>
+                        <h5 class="mb-0">
+                            {% if running_entry %}Running{% else %}Stopped{% endif %}
+                        </h5>
+                        {% if running_entry %}
+                            <small class="text-white-50">{{ running_entry.project.name|default:"No project" }}</small>
+                        {% else %}
+                            <small class="text-white-50">Ready to start</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-folder fs-1 opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1 text-white-50">Active Projects</h6>
+                        <h3 class="mb-0">{{ active_projects.count }}</h3>
+                        <small class="text-white-50">Currently active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-check2-square fs-1 opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1 text-white-50">Active Tasks</h6>
+                        <h3 class="mb-0">{{ active_tasks }}</h3>
+                        <small class="text-white-50">of {{ total_tasks }} total</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
+<!-- Running Timer Card -->
 {% if running_entry %}
-<script>
-// Live timer for running entry
-const start = new Date("{{ running_entry.start_time|date:'Y-m-d H:i:s' }}");
-setInterval(() => {
-    const now = new Date();
-    const diff = Math.floor((now - start) / 1000);
-    const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
-    const min = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-    const sec = String(diff % 60).padStart(2, '0');
-    const timerElement = document.getElementById('live-timer');
-    if (timerElement) {
-        timerElement.textContent = `${hrs}:${min}:${sec}`;
-    }
-}, 1000);
-</script>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-record-circle-fill me-2"></i>
+                    <h5 class="mb-0">Currently Tracking</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">
+                            <i class="bi bi-folder me-2 text-muted"></i>
+                            {{ running_entry.project.name|default:"No project assigned" }}
+                        </h6>
+                        {% if running_entry.task %}
+                        <p class="mb-2">
+                            <i class="bi bi-check2-square me-2 text-muted"></i>
+                            <strong>Task:</strong> {{ running_entry.task.name }}
+                        </p>
+                        {% endif %}
+                        <p class="mb-2">
+                            <i class="bi bi-chat-left-text me-2 text-muted"></i>
+                            <strong>Description:</strong> {{ running_entry.description|default:"No description" }}
+                        </p>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            Started at {{ running_entry.start_time|date:"g:i A" }}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'stop_timer' running_entry.id %}" class="btn btn-danger">
+                            <i class="bi bi-stop-circle me-2"></i>Stop Timer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endif %}
+
+<!-- Projects and Tasks Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-folder me-2 text-primary"></i>
+                        Recent Projects
+                    </h5>
+                    <a href="/projects/" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% for project in top_projects %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div>
+                        <h6 class="mb-1">{{ project.name }}</h6>
+                        <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>{{ project.client }}
+                        </small>
+                    </div>
+                    <div>
+                        <span class="badge rounded-pill" style="background-color: {{ project.color }};">
+                            Active
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="bi bi-folder-plus fs-1 text-muted mb-3 d-block"></i>
+                    <p class="text-muted mb-3">No projects yet</p>
+                    <a href="/projects/" class="btn btn-primary">Create First Project</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check2-square me-2 text-success"></i>
+                        Top Tasks
+                    </h5>
+                    <a href="/tasks/" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% for task in top_tasks %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div>
+                        <h6 class="mb-1">{{ task.name }}</h6>
+                        <small class="text-muted">
+                            <i class="bi bi-folder me-1"></i>{{ task.project.name }}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">{{ task.estimated_minutes }} min</small>
+                        {% if task.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="bi bi-plus-square fs-1 text-muted mb-3 d-block"></i>
+                    <p class="text-muted mb-3">No tasks yet</p>
+                    <a href="/tasks/" class="btn btn-success">Create First Task</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Time Entries -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2 text-info"></i>
+                        Recent Time Entries
+                    </h5>
+                    <a href="/tracker/" class="btn btn-sm btn-outline-info">View All</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_entries %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0">Project</th>
+                                <th class="border-0">Task</th>
+                                <th class="border-0">Description</th>
+                                <th class="border-0">Start Time</th>
+                                <th class="border-0">End Time</th>
+                                <th class="border-0 text-end">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in recent_entries %}
+                            <tr>
+                                <td>
+                                    <strong>{{ entry.project.name|default:"No project" }}</strong>
+                                </td>
+                                <td>{{ entry.task.name|default:"-" }}</td>
+                                <td>
+                                    <span class="text-muted">{{ entry.description|default:"-"|truncatechars:30 }}</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ entry.start_time|date:"M j, g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {% if entry.end_time %}
+                                            {{ entry.end_time|date:"M j, g:i A" }}
+                                        {% else %}
+                                            <span class="badge bg-success">Running</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    {% if entry.end_time %}
+                                        <span class="badge bg-primary">{{ entry.duration_minutes }} min</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-clock fs-1 text-muted mb-3 d-block"></i>
+                    <h5 class="text-muted mb-3">No time entries yet</h5>
+                    <p class="text-muted mb-4">Start tracking your time to see entries here</p>
+                    <a href="/tracker/" class="btn btn-primary">
+                        <i class="bi bi-play-circle me-2"></i>Start First Timer
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

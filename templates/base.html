@@ -3,502 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MyTimerApp - Professional Time Tracking{% endblock %}</title>
+    <title>{% block title %}MyTimerApp{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <!-- Alpine.js -->
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
 
-    <!-- Custom Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- HTMX and Alpine.js -->
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <script src="https://unpkg.com/alpinejs" defer></script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Global Styles -->
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-            --danger-gradient: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
-            --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-            --dark-gradient: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 15px rgba(0,0,0,0.08);
-            --shadow-lg: 0 8px 25px rgba(0,0,0,0.1);
-            --shadow-xl: 0 15px 35px rgba(0,0,0,0.12);
-
-            --border-radius: 12px;
-            --border-radius-lg: 15px;
-            --border-radius-xl: 20px;
-        }
-
-        * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        /* Modern Navigation */
-        .navbar {
-            background: var(--primary-gradient) !important;
-            box-shadow: var(--shadow-lg);
-            padding: 1rem 0;
-            backdrop-filter: blur(10px);
+            --bs-primary-rgb: 13, 110, 253;
+            --app-sidebar-width: 250px;
         }
 
         .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white !important;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .navbar-brand:hover {
-            transform: scale(1.05);
-            color: #f8f9fa !important;
-        }
-
-        .nav-link {
-            color: rgba(255,255,255,0.9) !important;
-            font-weight: 500;
-            padding: 0.5rem 1rem !important;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-            margin: 0 0.2rem;
-        }
-
-        .nav-link:hover {
-            color: white !important;
-            background: rgba(255,255,255,0.1);
-            transform: translateY(-2px);
-        }
-
-        .dropdown-menu {
-            border: none;
-            box-shadow: var(--shadow-xl);
-            border-radius: var(--border-radius);
-            padding: 0.5rem;
-            backdrop-filter: blur(10px);
-            background: rgba(255,255,255,0.95);
-        }
-
-        .dropdown-item {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            transition: all 0.2s ease;
-            color: #495057;
-            font-weight: 500;
-        }
-
-        .dropdown-item:hover {
-            background: var(--primary-gradient);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .dropdown-divider {
-            margin: 0.5rem 0;
-            border-color: #e9ecef;
-        }
-
-        /* Modern Breadcrumbs */
-        .breadcrumb {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1rem 1.5rem;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 1.5rem;
-        }
-
-        .breadcrumb-item a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .breadcrumb-item a:hover {
-            color: #764ba2;
-            transform: translateX(2px);
-        }
-
-        .breadcrumb-item.active {
-            color: #6c757d;
             font-weight: 600;
+            font-size: 1.25rem;
         }
 
-        /* Modern Cards */
         .card {
-            border: none;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-md);
-            transition: all 0.3s ease;
-            background: white;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
         }
 
-        .card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
-            padding: 1.25rem 1.5rem;
-            border: none;
-            font-weight: 600;
-        }
-
-        /* Modern Buttons */
         .btn {
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            transition: all 0.3s ease;
-            border: none;
-            text-transform: none;
-            letter-spacing: 0.3px;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-gradient);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--success-gradient);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-success:hover {
-            background: var(--success-gradient);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .btn-warning {
-            background: var(--warning-gradient);
-            color: #2d3436;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-warning:hover {
-            background: var(--warning-gradient);
-            color: #2d3436;
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: var(--danger-gradient);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-danger:hover {
-            background: var(--danger-gradient);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .btn-outline-primary {
-            border: 2px solid #667eea;
-            color: #667eea;
-            background: transparent;
-        }
-
-        .btn-outline-primary:hover {
-            background: var(--primary-gradient);
-            border-color: transparent;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Modern Form Elements */
-        .form-control, .form-select {
-            border-radius: var(--border-radius);
-            border: 2px solid #e9ecef;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
             font-weight: 500;
+        }
+
+        .table th {
+            font-weight: 600;
+            border-top: none;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
 
-        .form-label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Modern Tables */
-        .table {
-            border-radius: var(--border-radius-lg);
-            overflow: hidden;
-            background: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        .table thead th {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            font-weight: 600;
-            padding: 1.25rem 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.85rem;
-        }
-
-        .table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        .table tbody tr:hover {
-            background: #f8f9fa;
-            transform: scale(1.01);
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            border-color: #f1f3f4;
-            vertical-align: middle;
-        }
-
-        /* Modern Modals */
-        .modal-content {
-            border: none;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-xl);
-            backdrop-filter: blur(10px);
-        }
-
-        .modal-header {
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-            border: none;
-            padding: 1.5rem;
-        }
-
-        .modal-title {
-            font-weight: 600;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .modal-footer {
-            border: none;
-            padding: 1rem 1.5rem 1.5rem;
-        }
-
-        /* Modern Alerts */
-        .alert {
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 1rem 1.5rem;
+        .navbar-nav .nav-link {
             font-weight: 500;
-            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease-in-out;
         }
 
-        .alert-success {
-            background: linear-gradient(135deg, rgba(17, 153, 142, 0.1), rgba(56, 239, 125, 0.1));
-            color: #11998e;
-            border-left: 4px solid #11998e;
+        .navbar-nav .nav-link:hover {
+            transform: translateY(-1px);
         }
 
-        .alert-danger {
-            background: linear-gradient(135deg, rgba(253, 121, 168, 0.1), rgba(232, 67, 147, 0.1));
-            color: #e84393;
-            border-left: 4px solid #e84393;
-        }
-
-        .alert-warning {
-            background: linear-gradient(135deg, rgba(255, 234, 167, 0.3), rgba(250, 177, 160, 0.3));
-            color: #e17055;
-            border-left: 4px solid #e17055;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, rgba(116, 185, 255, 0.1), rgba(9, 132, 227, 0.1));
-            color: #0984e3;
-            border-left: 4px solid #0984e3;
-        }
-
-        /* Modern Badges */
-        .badge {
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
             font-weight: 600;
-            padding: 0.5rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            letter-spacing: 0.3px;
         }
 
-        /* Container Improvements */
-        .container, .container-fluid {
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            background: transparent;
-            min-height: calc(100vh - 200px);
-            padding: 1rem 0;
-        }
-
-        /* Footer Styles */
-        .footer {
-            background: var(--dark-gradient);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-            border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container, .container-fluid {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            .navbar {
-                padding: 0.75rem 0;
-            }
-
-            .btn {
-                padding: 0.6rem 1.2rem;
-                font-size: 0.9rem;
-            }
-
-            .card {
-                margin-bottom: 1rem;
-            }
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-gradient);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--dark-gradient);
-        }
-
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Utility Classes */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .gradient-text {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hover-lift {
-            transition: all 0.3s ease;
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
+        [x-cloak] {
+            display: none !important;
         }
     </style>
 
-    {% block extra_head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <!-- Modern Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-stopwatch me-2"></i>MyTimerApp
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-stopwatch me-2"></i>
+                MyTimerApp
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/">
-                            <i class="bi bi-house me-1"></i>Dashboard
+                            <i class="bi bi-house me-1"></i>Home
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="trackerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-stopwatch me-1"></i>Time Tracker
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tracker/">
+                            <i class="bi bi-play-circle me-1"></i>Time Tracker
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="trackerDropdown">
-                            <li>
-                                <a class="dropdown-item" href="/tracker/">
-                                    <i class="bi bi-play-circle me-2"></i>Active Timer
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="/tracker/deleted/">
-                                    <i class="bi bi-trash me-2"></i>Deleted Entries
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="/tracker/logs/">
-                                    <i class="bi bi-journal-text me-2"></i>Audit Logs
-                                </a>
-                            </li>
-                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/projects/">
@@ -506,10 +105,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/tasks/">
+                            <i class="bi bi-check2-square me-1"></i>Tasks
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/clients/">
                             <i class="bi bi-people me-1"></i>Clients
                         </a>
                     </li>
+                </ul>
+
+                <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="/admin/">
                             <i class="bi bi-gear me-1"></i>Admin
@@ -520,138 +127,51 @@
         </div>
     </nav>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <div class="container">
-            <!-- Modern Breadcrumbs -->
-            {% block breadcrumbs %}
-            {% if request.resolver_match.url_name != 'home' %}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="/">
-                            <i class="bi bi-house me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    {% block breadcrumb_items %}{% endblock %}
-                </ol>
-            </nav>
-            {% endif %}
-            {% endblock %}
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        {% block breadcrumbs %}
+        {% if request.resolver_match.url_name != 'home' %}
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb bg-white p-3 rounded shadow-sm">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none">
+                        <i class="bi bi-house me-1"></i>Home
+                    </a>
+                </li>
+                {% block breadcrumb_items %}{% endblock %}
+            </ol>
+        </nav>
+        {% endif %}
+        {% endblock %}
 
-            <!-- Page Content -->
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-
-    <!-- Modern Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-stopwatch me-2"></i>MyTimerApp
-                    </h5>
-                    <p class="text-light opacity-75">
-                        Professional time tracking solution for modern teams and individuals.
-                    </p>
+        <!-- Messages -->
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-light opacity-75 mb-0">
-                        © {{ "now"|date:"Y" }} MyTimerApp. Built with ❤️ for productivity.
-                    </p>
-                    <small class="text-light opacity-50">
-                        Version 1.0 • Django Powered
-                    </small>
-                </div>
+                {% endfor %}
             </div>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light text-center py-3 mt-5">
+        <div class="container">
+            <small>&copy; 2025 MyTimerApp. Built with Django & Bootstrap.</small>
         </div>
     </footer>
 
-    <!-- Global JavaScript -->
-    <script>
-        // Global app initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-            // Initialize dropdowns
-            var dropdowns = document.querySelectorAll('.dropdown-toggle');
-            dropdowns.forEach(function(dropdown) {
-                if (typeof bootstrap !== 'undefined') {
-                    new bootstrap.Dropdown(dropdown);
-                }
-            });
-
-            // Add loading states to forms
-            document.querySelectorAll('form').forEach(function(form) {
-                form.addEventListener('submit', function() {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    if (submitBtn) {
-                        submitBtn.innerHTML = '<span class="loading me-2"></span>Processing...';
-                        submitBtn.disabled = true;
-                    }
-                });
-            });
-
-            // Auto-hide alerts after 5 seconds
-            setTimeout(function() {
-                document.querySelectorAll('.alert').forEach(function(alert) {
-                    if (alert.classList.contains('alert-dismissible')) {
-                        var bsAlert = new bootstrap.Alert(alert);
-                        bsAlert.close();
-                    }
-                });
-            }, 5000);
-        });
-
-        // Global utility functions
-        function showNotification(message, type = 'success') {
-            const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show position-fixed"
-                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', alertHtml);
-
-            // Auto-remove after 3 seconds
-            setTimeout(function() {
-                const alert = document.querySelector('.alert.position-fixed');
-                if (alert) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            }, 3000);
-        }
-
-        // Enhanced HTMX configuration
-        if (typeof htmx !== 'undefined') {
-            htmx.config.defaultSwapStyle = 'outerHTML';
-            htmx.config.defaultSwapDelay = 100;
-
-            // Show loading indicator on HTMX requests
-            document.body.addEventListener('htmx:beforeRequest', function(evt) {
-                const target = evt.target;
-                if (target.tagName === 'BUTTON') {
-                    target.innerHTML = '<span class="loading me-2"></span>Loading...';
-                    target.disabled = true;
-                }
-            });
-
-            document.body.addEventListener('htmx:afterRequest', function(evt) {
-                const target = evt.target;
-                if (target.tagName === 'BUTTON') {
-                    target.disabled = false;
-                }
-            });
-        }
-    </script>
-
-    {% block extra_scripts %}{% endblock %}
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,54 @@
+<!-- templates/projects/partials/project_table.html -->
+{% for project in projects %}
+<tr class="project-row">
+    <td class="ps-4">
+        <div class="d-flex align-items-center">
+            <div class="project-color-indicator me-3" style="background-color: {{ project.color }};"></div>
+            <div>
+                <h6 class="mb-1 fw-semibold">{{ project.name }}</h6>
+                <small class="text-muted">Created recently</small>
+            </div>
+        </div>
+    </td>
+    <td>
+        <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle me-2 text-muted"></i>
+            <span>{{ project.client.name }}</span>
+        </div>
+    </td>
+    <td>
+        <div class="d-flex align-items-center">
+            <div class="project-color-indicator me-2" style="background-color: {{ project.color }};"></div>
+            <code class="text-muted">{{ project.color }}</code>
+        </div>
+    </td>
+    <td>
+        {% if project.archived %}
+            <span class="badge bg-secondary">
+                <i class="bi bi-archive me-1"></i>Archived
+            </span>
+        {% else %}
+            <span class="badge bg-success">
+                <i class="bi bi-check-circle me-1"></i>Active
+            </span>
+        {% endif %}
+    </td>
+    <td class="text-end pe-4">
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary btn-sm" title="Edit">
+                <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" title="Archive">
+                <i class="bi bi-archive"></i>
+            </button>
+            <form method="post" action="{% url 'project_delete' project.pk %}" class="d-inline"
+                  onsubmit="return confirm('Are you sure you want to delete this project?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% endfor %}

@@ -1,126 +1,72 @@
-<!-- templates/projects/partials/project_form.html -->
-<div class="modal-header">
+<div class="modal-header bg-primary text-white">
     <h5 class="modal-title">
-        <i class="bi bi-folder-plus me-2"></i>Create New Project
+        <i class="bi bi-folder-plus me-2"></i>Add New Project
     </h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
-
-<form method="post" hx-post="{% url 'project_create_modal' %}" hx-target="#projects-table" hx-swap="beforeend">
-    {% csrf_token %}
-    <div class="modal-body">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="mb-3">
-                    <label for="id_name" class="form-label">
-                        <i class="bi bi-type me-1"></i>Project Name <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" name="name" id="id_name" class="form-control" 
-                           placeholder="Enter project name..." required>
-                    <div class="form-text">Choose a descriptive name for your project</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="id_client" class="form-label">
-                        <i class="bi bi-building me-1"></i>Client <span class="text-danger">*</span>
-                    </label>
-                    <select name="client" id="id_client" class="form-select" required>
-                        <option value="">Select a client...</option>
-                        {% for client in clients %}
-                            <option value="{{ client.id }}">{{ client.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="form-text">Associate this project with a client</div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <label for="id_color" class="form-label">
-                        <i class="bi bi-palette me-1"></i>Project Color
-                    </label>
-                    <div class="color-picker-container">
-                        <input type="color" name="color" id="id_color" class="form-control form-control-color" 
-                               value="#667eea" title="Choose project color">
-                        <div class="color-preview mt-2 p-3 rounded text-white text-center fw-bold" 
-                             style="background-color: #667eea;">
-                            Preview Color
-                        </div>
-                    </div>
-                    <div class="form-text">This color will identify your project</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
+<div class="modal-body">
+    <form method="post" hx-post="{% url 'project_create_modal' %}" hx-target="#projects-table" hx-swap="innerHTML" hx-indicator="#project-loading">
+        {% csrf_token %}
+        <div class="row g-3">
             <div class="col-12">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" name="archived" id="id_archived">
-                    <label class="form-check-label" for="id_archived">
-                        <i class="bi bi-archive me-1"></i>Archive this project
+                <label for="project_client" class="form-label fw-semibold">
+                    <i class="bi bi-person me-1"></i>Client *
+                </label>
+                <select name="client" id="project_client" class="form-select" required>
+                    <option value="">Select a client</option>
+                    {{ form.client }}
+                </select>
+                <div class="form-text">Choose the client this project belongs to</div>
+            </div>
+            <div class="col-12">
+                <label for="project_name" class="form-label fw-semibold">
+                    <i class="bi bi-folder me-1"></i>Project Name *
+                </label>
+                <input type="text" name="name" id="project_name" class="form-control" 
+                       placeholder="Enter project name" required autofocus>
+                <div class="form-text">Give your project a descriptive name</div>
+            </div>
+            <div class="col-md-6">
+                <label for="project_color" class="form-label fw-semibold">
+                    <i class="bi bi-palette me-1"></i>Project Color
+                </label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="color" name="color" id="project_color" class="form-control form-control-color" 
+                           value="#03a9f4" style="width: 60px; height: 38px;">
+                    <small class="text-muted">Choose a color to identify this project</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-gear me-1"></i>Project Status
+                </label>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="archived" id="project_archived">
+                    <label class="form-check-label" for="project_archived">
+                        <i class="bi bi-archive me-1"></i>Start as archived project
                     </label>
                     <div class="form-text">Archived projects are hidden from active lists</div>
                 </div>
             </div>
         </div>
         
-        <!-- Project Statistics Preview -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="fw-bold">0</div>
-                            <small>Tasks</small>
-                        </div>
-                        <div class="col-4">
-                            <div class="fw-bold">0h</div>
-                            <small>Time Logged</small>
-                        </div>
-                        <div class="col-4">
-                            <div class="fw-bold">New</div>
-                            <small>Status</small>
-                        </div>
-                    </div>
-                </div>
+        <!-- Loading indicator -->
+        <div id="project-loading" class="text-center mt-3" style="display: none;">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Creating project...</span>
+            </div>
+            <small class="ms-2 text-muted">Creating project...</small>
+        </div>
+        
+        <div class="mt-4 border-top pt-3">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i>Create Project
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
             </div>
         </div>
-    </div>
-    
-    <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle me-2"></i>Cancel
-        </button>
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>Create Project
-        </button>
-    </div>
-</form>
-
-<script>
-// Color picker functionality
-document.getElementById('id_color').addEventListener('change', function() {
-    const preview = document.querySelector('.color-preview');
-    preview.style.backgroundColor = this.value;
-});
-
-// Form validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const name = document.getElementById('id_name').value.trim();
-    const client = document.getElementById('id_client').value;
-    
-    if (!name) {
-        e.preventDefault();
-        showNotification('Please enter a project name', 'error');
-        document.getElementById('id_name').focus();
-        return;
-    }
-    
-    if (!client) {
-        e.preventDefault();
-        showNotification('Please select a client', 'error');
-        document.getElementById('id_client').focus();
-        return;
-    }
-});
-</script>
+    </form>
+</div>

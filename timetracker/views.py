@@ -1,49 +1,124 @@
-# timetracker/views.py
+# timetracker/views.py - Enhanced version with modern statistics
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Count
+from datetime import datetime, timedelta
 from timetracker.models import TimeEntry, TimeEntryAuditLog
 from projects.models import Project, Task
 from core.models import Client, Workspace
 from timetracker.forms import ManualEntryForm, StopTimerForm
 from timetracker.utils import log_time_entry_action, serialize_time_entry
 import pytz
-from datetime import datetime
 
 
 def tracker_home(request):
-    # Only show non-deleted entries
+    # Get current time entries
     running_entry = TimeEntry.objects.filter(end_time__isnull=True, deleted=False).first()
     past_entries = TimeEntry.objects.filter(end_time__isnull=False, deleted=False).order_by('-start_time')
-    form = ManualEntryForm()
-    projects = Project.objects.filter(archived=False)
-    tasks = Task.objects.filter(is_active=True)
-    clients = Client.objects.all()
 
+    # Calculate statistics
+    today = now().date()
+    week_start = today - timedelta(days=today.weekday())
+
+    # Today's time
+    today_entries = TimeEntry.objects.filter(
+        start_time__date=today,
+        end_time__isnull=False,
+        deleted=False
+    )
+    today_minutes = sum([(e.end_time - e.start_time).total_seconds() / 60 for e in today_entries])
+    today_hours = today_minutes / 60
+
+    # This week's time
+    week_entries = TimeEntry.objects.filter(
+        start_time__date__gte=week_start,
+        end_time__isnull=False,
+        deleted=False
+    )
+    week_minutes = sum([(e.end_time - e.start_time).total_seconds() / 60 for e in week_entries])
+    week_hours = week_minutes / 60
+
+    # Active projects count
+    active_projects = Project.objects.filter(archived=False)
+    active_projects_count = active_projects.count()
+
+    # Form and data for templates
+    form = ManualEntryForm()
+    projects = Project.objects.filter(archived=False).order_by('name')
+    tasks = Task.objects.filter(is_active=True).order_by('name')
+    clients = Client.objects.all().order_by('name')
+
+    # Progress calculation for running timer
     progress_percent = 0
     if running_entry:
         workspace = Workspace.objects.first()
         if workspace:
             duration = (now() - running_entry.start_time).total_seconds() / 3600
-            progress_percent = min(100, int((duration / 8) * 100))
+            progress_percent = min(100, int((duration / 8) * 100))  # 8 hours = 100%
 
-    return render(request, 'timetracker/tracker.html', {
+    context = {
         'running_entry': running_entry,
-        'past_entries': past_entries,
+        'past_entries': past_entries[:20],  # Limit to recent 20 entries
         'form': form,
         'projects': projects,
         'tasks': tasks,
         'clients': clients,
         'progress_percent': progress_percent,
-        'stop_form': StopTimerForm() if running_entry else None
-    })
+        'stop_form': StopTimerForm() if running_entry else None,
+
+        # Enhanced statistics
+        'today_hours': today_hours,
+        'week_hours': week_hours,
+        'active_projects_count': active_projects_count,
+        'total_entries_count': past_entries.count(),
+
+        # Additional context for better UX
+        'today_entries_count': today_entries.count(),
+        'week_entries_count': week_entries.count(),
+    }
+
+    return render(request, 'timetracker/tracker.html', context)
+
+
+def discard_timer(request, entry_id):
+    """Discard a running timer without saving it"""
+    entry = get_object_or_404(TimeEntry, pk=entry_id, end_time__isnull=True, deleted=False)
+
+    if request.method == "POST":
+        # Store entry info for logging before deletion
+        description = entry.description or "No description"
+        duration_seconds = (now() - entry.start_time).total_seconds()
+        duration_minutes = int(duration_seconds / 60)
+
+        # Log the discard action
+        log_time_entry_action(
+            request,
+            entry,
+            'DELETE',  # Using DELETE action type for discarded timers
+            notes=f"Timer discarded without saving. Duration: {duration_minutes} minutes, Description: '{description}'"
+        )
+
+        # Permanently delete the entry (not soft delete since it was never "completed")
+        entry.delete()
+
+        messages.info(request, f"Timer discarded. No time was saved from your {duration_minutes}-minute session.")
+        return redirect('tracker_home')
+
+    return redirect('tracker_home')
 
 
 def start_timer(request):
     if request.method == "POST":
+        # Check if there's already a running timer
+        existing_timer = TimeEntry.objects.filter(end_time__isnull=True, deleted=False).first()
+        if existing_timer:
+            messages.warning(request, "You already have a timer running. Please stop it first.")
+            return redirect('tracker_home')
+
         time_entry = TimeEntry.objects.create(
             description=request.POST.get("description", ""),
             start_time=now()
@@ -56,6 +131,8 @@ def start_timer(request):
             'START_TIMER',
             notes=f"Timer started with description: '{time_entry.description}'"
         )
+
+        messages.success(request, "Timer started successfully! Configure project details when you're ready to stop.")
 
     return redirect('tracker_home')
 
@@ -71,6 +148,7 @@ def stop_timer(request, entry_id):
         task_id = request.POST.get('task')
         description = request.POST.get('description', '')
 
+        # Handle new project creation
         if project_id == 'new':
             new_project_name = request.POST.get('new_project_name')
             new_project_client = request.POST.get('new_project_client')
@@ -81,18 +159,12 @@ def stop_timer(request, entry_id):
                     client_id=new_project_client
                 )
                 project_id = project.id
+                messages.success(request, f"New project '{new_project_name}' created successfully!")
             else:
-                return render(request, 'timetracker/tracker.html', {
-                    'error': 'Please provide both project name and client for new project',
-                    'running_entry': entry,
-                    'stop_form': StopTimerForm(initial={'description': entry.description}),
-                    'past_entries': TimeEntry.objects.filter(end_time__isnull=False, deleted=False).order_by(
-                        '-start_time'),
-                    'projects': Project.objects.filter(archived=False),
-                    'tasks': Task.objects.filter(is_active=True),
-                    'clients': Client.objects.all()
-                })
+                messages.error(request, "Please provide both project name and client for new project.")
+                return redirect('tracker_home')
 
+        # Handle new task creation
         if task_id == 'new':
             new_task_name = request.POST.get('new_task_name')
 
@@ -102,19 +174,14 @@ def stop_timer(request, entry_id):
                     project_id=project_id
                 )
                 task_id = task.id
+                messages.success(request, f"New task '{new_task_name}' created successfully!")
             else:
                 task_id = None
 
+        # Validate project selection
         if not project_id or project_id == 'new':
-            return render(request, 'timetracker/tracker.html', {
-                'error': 'Please select or create a project before stopping the timer',
-                'running_entry': entry,
-                'stop_form': StopTimerForm(initial={'description': entry.description}),
-                'past_entries': TimeEntry.objects.filter(end_time__isnull=False, deleted=False).order_by('-start_time'),
-                'projects': Project.objects.filter(archived=False),
-                'tasks': Task.objects.filter(is_active=True),
-                'clients': Client.objects.all()
-            })
+            messages.error(request, "Please select or create a project before stopping the timer.")
+            return redirect('tracker_home')
 
         # Update the entry
         entry.project_id = project_id
@@ -123,44 +190,46 @@ def stop_timer(request, entry_id):
         entry.end_time = now()
         entry.save()
 
+        # Calculate duration for success message
+        duration_minutes = entry.duration_minutes()
+        duration_text = f"{duration_minutes // 60}h {duration_minutes % 60}m" if duration_minutes >= 60 else f"{duration_minutes}m"
+
         # Log the action
         log_time_entry_action(
             request,
             entry,
             'STOP_TIMER',
             previous_values=previous_values,
-            notes=f"Timer stopped. Duration: {entry.duration_minutes()} minutes"
+            notes=f"Timer stopped. Duration: {duration_minutes} minutes"
         )
 
+        messages.success(request, f"Timer stopped! You tracked {duration_text} on {entry.project.name}.")
         return redirect('tracker_home')
-    else:
-        if not entry.project:
-            return render(request, 'timetracker/tracker.html', {
-                'error': 'Please select a project before stopping the timer',
-                'running_entry': entry,
-                'stop_form': StopTimerForm(initial={'description': entry.description}),
-                'past_entries': TimeEntry.objects.filter(end_time__isnull=False, deleted=False).order_by('-start_time'),
-                'projects': Project.objects.filter(archived=False),
-                'tasks': Task.objects.filter(is_active=True),
-                'clients': Client.objects.all()
-            })
-        entry.end_time = now()
-        entry.save()
 
-        # Log the action
-        log_time_entry_action(
-            request,
-            entry,
-            'STOP_TIMER',
-            previous_values=previous_values,
-            notes=f"Timer stopped without changes. Duration: {entry.duration_minutes()} minutes"
-        )
+    # Handle GET request (shouldn't happen in normal flow)
+    entry.end_time = now()
+    entry.save()
+
+    log_time_entry_action(
+        request,
+        entry,
+        'STOP_TIMER',
+        previous_values=previous_values,
+        notes=f"Timer stopped without changes. Duration: {entry.duration_minutes()} minutes"
+    )
 
     return redirect('tracker_home')
 
 
 def continue_entry(request, entry_id):
     old = get_object_or_404(TimeEntry, pk=entry_id, deleted=False)
+
+    # Check if there's already a running timer
+    existing_timer = TimeEntry.objects.filter(end_time__isnull=True, deleted=False).first()
+    if existing_timer:
+        messages.warning(request, "Please stop your current timer before starting a new one.")
+        return redirect('tracker_home')
+
     new_entry = TimeEntry.objects.create(
         project=old.project,
         task=old.task,
@@ -176,6 +245,7 @@ def continue_entry(request, entry_id):
         notes=f"Continued from TimeEntry #{old.id} ({old.project.name if old.project else 'No project'})"
     )
 
+    messages.success(request, f"Timer started for {old.project.name if old.project else 'your task'}!")
     return redirect('tracker_home')
 
 
@@ -186,7 +256,9 @@ def duplicate_entry(request, entry_id):
         task=old.task,
         description=old.description,
         start_time=old.start_time,
-        end_time=old.end_time
+        end_time=old.end_time,
+        billable=old.billable,
+        hourly_rate=old.hourly_rate
     )
 
     # Log the duplication
@@ -197,6 +269,7 @@ def duplicate_entry(request, entry_id):
         notes=f"Duplicated from TimeEntry #{old.id}. Duration: {new_entry.duration_minutes()} minutes"
     )
 
+    messages.success(request, f"Time entry duplicated successfully!")
     return redirect('tracker_home')
 
 
@@ -312,17 +385,25 @@ def audit_logs(request):
 
 
 def submit_manual_entry(request):
-    form = ManualEntryForm(request.POST)
-    if form.is_valid():
-        entry = form.save()
+    if request.method == "POST":
+        form = ManualEntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save()
 
-        # Log manual entry creation
-        log_time_entry_action(
-            request,
-            entry,
-            'CREATE',
-            notes=f"Manual entry created. Duration: {entry.duration_minutes()} minutes"
-        )
+            # Log manual entry creation
+            log_time_entry_action(
+                request,
+                entry,
+                'CREATE',
+                notes=f"Manual entry created. Duration: {entry.duration_minutes()} minutes"
+            )
+
+            duration_minutes = entry.duration_minutes()
+            duration_text = f"{duration_minutes // 60}h {duration_minutes % 60}m" if duration_minutes >= 60 else f"{duration_minutes}m"
+            messages.success(request,
+                             f"Manual entry saved! {duration_text} tracked for {entry.project.name if entry.project else 'your task'}.")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
 
     return redirect('tracker_home')
 
@@ -370,10 +451,12 @@ def edit_entry(request, entry_id):
             notes=f"Entry updated. New duration: {entry.duration_minutes()} minutes"
         )
 
+        messages.success(request, "Time entry updated successfully!")
         return redirect('tracker_home')
 
-    projects = Project.objects.filter(archived=False)
-    tasks = Task.objects.filter(project=entry.project, is_active=True) if entry.project else []
+    # For GET request, return the edit form
+    projects = Project.objects.filter(archived=False).order_by('name')
+    tasks = Task.objects.filter(project=entry.project, is_active=True).order_by('name') if entry.project else []
 
     return render(request, 'timetracker/partials/edit_entry_form.html', {
         'entry': entry,
@@ -385,19 +468,27 @@ def edit_entry(request, entry_id):
 # Keep existing utility functions unchanged
 def tasks_by_project(request):
     project_id = request.GET.get("project")
+
     if project_id == 'new':
-        return HttpResponse('''
-            <option value="">Select Task (Optional)</option>
-            <option value="new">➕ Create New Task</option>
-        ''')
-    tasks = Task.objects.filter(project_id=project_id, is_active=True) if project_id else []
+        # Return empty task list for new projects
+        return render(request, 'timetracker/partials/task_dropdown.html', {'tasks': []})
 
-    html = '<option value="">Select Task (Optional)</option>'
-    for task in tasks:
-        html += f'<option value="{task.id}">{task.name}</option>'
-    html += '<option value="new">➕ Create New Task</option>'
+    tasks = Task.objects.filter(project_id=project_id, is_active=True).order_by('name') if project_id else []
 
-    return HttpResponse(html)
+    return render(request, 'timetracker/partials/task_dropdown.html', {'tasks': tasks})
+
+
+def tasks_by_project_edit(request):
+    """Separate endpoint for edit form task loading"""
+    project_id = request.GET.get("project")
+    selected_task_id = request.GET.get("selected_task_id")
+
+    tasks = Task.objects.filter(project_id=project_id, is_active=True).order_by('name') if project_id else []
+
+    return render(request, 'timetracker/partials/edit_task_dropdown.html', {
+        'tasks': tasks,
+        'selected_task_id': int(selected_task_id) if selected_task_id else None
+    })
 
 
 @csrf_exempt
@@ -409,7 +500,7 @@ def ajax_add_project(request):
         Project.objects.create(name=name, client_id=client_id)
 
     return render(request, "timetracker/partials/project_options.html", {
-        "projects": Project.objects.filter(archived=False)
+        "projects": Project.objects.filter(archived=False).order_by('name')
     })
 
 
@@ -423,5 +514,5 @@ def ajax_add_task(request):
 
     return render(request, "timetracker/partials/task_options.html", {
         "tasks": Task.objects.filter(project_id=project_id,
-                                     is_active=True) if project_id and project_id.isdigit() else []
+                                     is_active=True).order_by('name') if project_id and project_id.isdigit() else []
     })

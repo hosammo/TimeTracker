@@ -1,10 +1,217 @@
+<!-- templates/projects/partials/task_form.html -->
 <div class="modal-header">
-    <h5 class="modal-title">Add Task</h5>
+    <h5 class="modal-title">
+        <i class="bi bi-plus-square me-2"></i>Create New Task
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
 </div>
-<div class="modal-body">
-    <form method="post" hx-post="{% url 'task_create_modal' %}" hx-target="#tasks-table" hx-swap="beforeend">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
-</div>
+
+<form method="post" hx-post="{% url 'task_create_modal' %}" hx-target="#tasks-table" hx-swap="beforeend">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label for="id_name" class="form-label">
+                        <i class="bi bi-type me-1"></i>Task Name <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="name" id="id_name" class="form-control" 
+                           placeholder="Enter task name..." required>
+                    <div class="form-text">Be specific about what needs to be done</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_project" class="form-label">
+                        <i class="bi bi-folder me-1"></i>Project <span class="text-danger">*</span>
+                    </label>
+                    <select name="project" id="id_project" class="form-select" required>
+                        <option value="">Select a project...</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}" data-color="{{ project.color }}">
+                                {{ project.name }} {% if project.client %}({{ project.client.name }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Which project does this task belong to?</div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="id_estimated_minutes" class="form-label">
+                        <i class="bi bi-clock me-1"></i>Estimated Time
+                    </label>
+                    <div class="input-group">
+                        <input type="number" name="estimated_minutes" id="id_estimated_minutes" 
+                               class="form-control" min="0" value="60" placeholder="0">
+                        <span class="input-group-text">minutes</span>
+                    </div>
+                    <div class="form-text">How long do you expect this to take?</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-flag me-1"></i>Priority Level
+                    </label>
+                    <div class="priority-selector">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priority_low" value="low">
+                            <label class="form-check-label" for="priority_low">
+                                <span class="badge bg-success">Low Priority</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priority_medium" value="medium" checked>
+                            <label class="form-check-label" for="priority_medium">
+                                <span class="badge bg-warning">Medium Priority</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priority_high" value="high">
+                            <label class="form-check-label" for="priority_high">
+                                <span class="badge bg-danger">High Priority</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label for="id_description" class="form-label">
+                        <i class="bi bi-card-text me-1"></i>Description (Optional)
+                    </label>
+                    <textarea name="description" id="id_description" class="form-control" rows="3" 
+                              placeholder="Add task description, requirements, or notes..."></textarea>
+                    <div class="form-text">Provide additional context for this task</div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="id_due_date" class="form-label">
+                        <i class="bi bi-calendar me-1"></i>Due Date (Optional)
+                    </label>
+                    <input type="date" name="due_date" id="id_due_date" class="form-control">
+                    <div class="form-text">When should this be completed?</div>
+                </div>
+                
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="id_is_active" checked>
+                    <label class="form-check-label" for="id_is_active">
+                        <i class="bi bi-play-circle me-1"></i>Task is active
+                    </label>
+                    <div class="form-text">Active tasks appear in time tracking</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Preview -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-eye me-2"></i>Task Preview
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="task-preview">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="preview-task-name mb-1">New Task</h6>
+                                    <small class="text-muted preview-project-name">No project selected</small>
+                                </div>
+                                <span class="badge bg-warning preview-priority">Medium Priority</span>
+                            </div>
+                            <div class="row text-center mt-3">
+                                <div class="col-4">
+                                    <div class="small text-muted">Estimated</div>
+                                    <div class="fw-bold preview-estimated">60 min</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="small text-muted">Status</div>
+                                    <div class="fw-bold text-success preview-status">Active</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="small text-muted">Progress</div>
+                                    <div class="fw-bold text-info">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-plus-circle me-2"></i>Create Task
+        </button>
+    </div>
+</form>
+
+<script>
+// Live preview functionality
+function updatePreview() {
+    const taskName = document.getElementById('id_name').value || 'New Task';
+    const projectSelect = document.getElementById('id_project');
+    const projectName = projectSelect.options[projectSelect.selectedIndex]?.text || 'No project selected';
+    const estimatedMinutes = document.getElementById('id_estimated_minutes').value || '0';
+    const isActive = document.getElementById('id_is_active').checked;
+    const priority = document.querySelector('input[name="priority"]:checked').value;
+    
+    document.querySelector('.preview-task-name').textContent = taskName;
+    document.querySelector('.preview-project-name').textContent = projectName;
+    document.querySelector('.preview-estimated').textContent = estimatedMinutes + ' min';
+    document.querySelector('.preview-status').textContent = isActive ? 'Active' : 'Inactive';
+    document.querySelector('.preview-status').className = isActive ? 'fw-bold text-success' : 'fw-bold text-secondary';
+    
+    // Update priority badge
+    const priorityBadge = document.querySelector('.preview-priority');
+    priorityBadge.textContent = priority.charAt(0).toUpperCase() + priority.slice(1) + ' Priority';
+    priorityBadge.className = `badge ${
+        priority === 'high' ? 'bg-danger' : 
+        priority === 'medium' ? 'bg-warning' : 
+        'bg-success'
+    }`;
+}
+
+// Add event listeners for live preview
+document.getElementById('id_name').addEventListener('input', updatePreview);
+document.getElementById('id_project').addEventListener('change', updatePreview);
+document.getElementById('id_estimated_minutes').addEventListener('input', updatePreview);
+document.getElementById('id_is_active').addEventListener('change', updatePreview);
+document.querySelectorAll('input[name="priority"]').forEach(radio => {
+    radio.addEventListener('change', updatePreview);
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const name = document.getElementById('id_name').value.trim();
+    const project = document.getElementById('id_project').value;
+    
+    if (!name) {
+        e.preventDefault();
+        showNotification('Please enter a task name', 'error');
+        document.getElementById('id_name').focus();
+        return;
+    }
+    
+    if (!project) {
+        e.preventDefault();
+        showNotification('Please select a project', 'error');
+        document.getElementById('id_project').focus();
+        return;
+    }
+});
+
+// Initialize preview
+updatePreview();
+</script>

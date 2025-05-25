@@ -1,0 +1,9 @@
+<!-- templates/timetracker/partials/edit_task_dropdown.html -->
+<select name="task" id="edit_task" class="form-select">
+    <option value="">No Task</option>
+    {% for task in tasks %}
+        <option value="{{ task.id }}" {% if selected_task_id == task.id %}selected{% endif %}>
+            {{ task.name }}
+        </option>
+    {% endfor %}
+</select>

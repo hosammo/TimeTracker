@@ -1,6 +1,103 @@
-<tr>
-    <td>{{ task.project.name }}</td>
-    <td>{{ task.name }}</td>
-    <td>{{ task.estimated_minutes }}</td>
-    <td>{{ task.is_active }}</td>
-</tr>
+<!-- templates/projects/partials/task_table.html -->
+<div class="tasks-container" id="tasksGrid">
+    {% for task in tasks %}
+    <div class="task-card"
+         data-status="{{ task.is_active|yesno:'active,inactive' }}"
+         data-project="{{ task.project.id }}"
+         data-name="{{ task.name|lower }}"
+         data-priority="medium">
+
+        <div class="task-status-bar priority-medium"></div>
+
+        <div class="task-header">
+            <div>
+                <h6 class="task-title">{{ task.name }}</h6>
+                <p class="task-project">
+                    <i class="bi bi-folder me-1"></i>
+                    {{ task.project.name }}
+                </p>
+            </div>
+            <div class="text-end">
+                <span class="task-status-badge {{ task.is_active|yesno:'status-active,status-inactive' }}">
+                    {{ task.is_active|yesno:'Active,Inactive' }}
+                </span>
+            </div>
+        </div>
+
+        <div class="task-meta">
+            <div class="row align-items-center mb-2">
+                <div class="col-6">
+                    <small class="text-muted">Estimated Time</small>
+                    <div class="estimated-time">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ task.estimated_minutes }} min
+                    </div>
+                </div>
+                <div class="col-6 text-end">
+                    <small class="text-muted">Progress</small>
+                    <div class="text-success fw-bold">0%</div>
+                </div>
+            </div>
+
+            <div class="task-progress">
+                <div class="task-progress-bar" style="width: 0%;"></div>
+            </div>
+
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <div class="small text-muted">Time Logged</div>
+                    <div class="fw-bold text-primary">0h</div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Remaining</div>
+                    <div class="fw-bold text-warning">{{ task.estimated_minutes }}m</div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Entries</div>
+                    <div class="fw-bold text-info">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="task-actions">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-primary btn-sm me-2">
+                        <i class="bi bi-play me-1"></i>Start Timer
+                    </button>
+                    <button class="btn btn-outline-success btn-sm me-2">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                </div>
+                <div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-copy me-2"></i>Duplicate
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#"
+                                   onclick="confirmDelete('{{ task.id }}', '{{ task.name }}')">
+                                    <i class="bi bi-trash me-2"></i>Delete
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

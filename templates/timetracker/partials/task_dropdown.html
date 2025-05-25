@@ -1,0 +1,9 @@
+<!-- templates/timetracker/partials/task_dropdown.html -->
+<select name="task" id="id_task" class="form-select"
+    x-on:change="if($event.target.value === 'new') { showNewTask = true; } else { showNewTask = false; }">
+    <option value="">Select Task (Optional)</option>
+    {% for task in tasks %}
+        <option value="{{ task.id }}">{{ task.name }}</option>
+    {% endfor %}
+    <option value="new">➕ Create New Task</option>
+</select>

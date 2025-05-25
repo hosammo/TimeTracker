@@ -1,6 +1,57 @@
-<tr>
-    <td>{{ project.name }}</td>
-    <td>{{ project.client }}</td>
-    <td><span style="background-color: {{ project.color }}; padding: 2px 10px;"></span> {{ project.color }}</td>
-    <td>{{ project.archived }}</td>
-</tr>
+<!-- templates/projects/partials/project_table.html -->
+<div class="projects-grid" id="projectsGrid">
+    {% for project in projects %}
+    <div class="project-card" data-client="{{ project.client.id }}" data-name="{{ project.name|lower }}">
+        <div class="project-color-bar" style="background-color: {{ project.color }};"></div>
+        <div class="project-header">
+            <h5 class="project-title">{{ project.name }}</h5>
+            <p class="project-client">
+                <i class="bi bi-building me-1"></i>
+                {{ project.client.name }}
+            </p>
+        </div>
+
+        <div class="project-meta">
+            <div class="row text-center">
+                <div class="col-4">
+                    <div class="small text-muted">Tasks</div>
+                    <div class="fw-bold">{{ project.task_set.count|default:"0" }}</div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Status</div>
+                    <div class="fw-bold">
+                        {% if project.archived %}
+                            <span class="badge bg-secondary">Archived</span>
+                        {% else %}
+                            <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="small text-muted">Color</div>
+                    <div class="fw-bold">
+                        <span class="badge" style="background-color: {{ project.color }}; color: white;">
+                            {{ project.color }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-actions">
+            <div class="action-buttons">
+                <button class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-eye me-1"></i>View
+                </button>
+                <button class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </button>
+                <button class="btn btn-outline-danger btn-sm"
+                        onclick="confirmDelete('{{ project.id }}', '{{ project.name }}')">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

@@ -1,28 +1,350 @@
 {% extends 'base.html' %}
-{% block title %}Time Tracker{% endblock %}
+{% block title %}Time Tracker - MyTimerApp{% endblock %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item active">Time Tracker</li>
+    <li class="breadcrumb-item active">
+        <i class="bi bi-stopwatch me-1"></i>Time Tracker
+    </li>
 {% endblock %}
 
 {% block extra_head %}
 <style>
-    [x-cloak] { display: none !important; }
-    .form-select option[value="new"] {
+    .page-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin: -1.5rem -15px 2rem -15px;
+        border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
+    }
+    
+    .running-timer-card {
+        background: var(--success-gradient);
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-xl);
+        position: relative;
+        overflow: hidden;
+        animation: pulse-glow 3s infinite;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: var(--shadow-xl), 0 0 20px rgba(56, 239, 125, 0.3); }
+        50% { box-shadow: var(--shadow-xl), 0 0 30px rgba(56, 239, 125, 0.5); }
+    }
+    
+    .timer-display {
+        font-size: 3rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 1rem 0;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .quick-start-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-start-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .stats-dashboard {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .recent-entries-section {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .section-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .entry-card {
+        border-left: 4px solid var(--primary-gradient);
+        background: white;
+        margin-bottom: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .entry-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(5px);
+    }
+    
+    .entry-header {
+        padding: 1.25rem 1.5rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .entry-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+    }
+    
+    .entry-project {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    .entry-meta {
+        padding: 0 1.5rem 1.25rem;
+    }
+    
+    .entry-actions {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .duration-badge {
+        background: var(--success-gradient);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .time-badge {
+        background: var(--info-gradient);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .progress-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(
+            var(--success-gradient) 0deg,
+            var(--success-gradient) calc(var(--progress, 0) * 3.6deg),
+            rgba(255,255,255,0.3) calc(var(--progress, 0) * 3.6deg),
+            rgba(255,255,255,0.3) 360deg
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .progress-inner {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: var(--success-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
         font-weight: bold;
-        color: #0d6efd;
+    }
+    
+    .date-group {
+        margin-bottom: 2rem;
+    }
+    
+    .date-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid var(--primary-gradient);
+    }
+    
+    .entries-container {
+        padding: 1.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .floating-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        z-index: 1000;
+    }
+    
+    .floating-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .floating-btn:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-xl);
+        color: white;
+    }
+    
+    .floating-btn.primary {
+        background: var(--primary-gradient);
+    }
+    
+    .floating-btn.success {
+        background: var(--success-gradient);
+    }
+    
+    .floating-btn.warning {
+        background: var(--warning-gradient);
+    }
+    
+    @media (max-width: 768px) {
+        .timer-display {
+            font-size: 2rem;
+        }
+        
+        .floating-actions {
+            bottom: 1rem;
+            right: 1rem;
+        }
+        
+        .floating-btn {
+            width: 56px;
+            height: 56px;
+            font-size: 1.25rem;
+        }
+        
+        .page-header {
+            padding: 1.5rem 0;
+            margin: -1rem -15px 2rem -15px;
+        }
+        
+        .running-timer-card {
+            padding: 1.5rem;
+        }
+        
+        .entry-card {
+            margin-bottom: 0.75rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="py-4">
-    <h2 class="text-center mb-4">⏱ Live Time Tracker</h2>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-2">
+                    <i class="bi bi-stopwatch me-3"></i>Live Time Tracker
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Track your time with precision and boost your productivity
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div style="font-size: 4rem; opacity: 0.3;">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="container">
+    <!-- Messages -->
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
+                <i class="bi bi-check-circle me-2"></i>{{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         {% endfor %}
@@ -30,224 +352,495 @@
 
     {% if error %}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ error }}
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endif %}
 
-    {% if running_entry %}
-    <div class="card shadow-sm border-success mb-4">
-        <div class="card-body">
-            <h5 class="card-title text-success">🔴 Tracking Now</h5>
-            {% if running_entry.project %}
-                <p><strong>Project:</strong> {{ running_entry.project.name }}</p>
-                <p><strong>Task:</strong> {{ running_entry.task.name|default:"No task" }}</p>
-            {% else %}
-                <p class="text-warning"><strong>⚠️ No project selected yet</strong></p>
-            {% endif %}
-            <p><strong>Description:</strong> {{ running_entry.description|default:"No description" }}</p>
-            <p><small>Started at: {{ running_entry.start_time }}</small></p>
-            <p><strong>Elapsed:</strong> <span id="live-timer">--:--:--</span></p>
-            <div class="progress mb-3">
-              <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress_percent }}%;" aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            
-            <!-- Stop Timer Form -->
-            <form method="post" action="{% url 'stop_timer' running_entry.id %}" class="mt-3" x-data="{ showNewProject: false, showNewTask: false }">
-                {% csrf_token %}
-                <div class="row g-2 mb-3">
-                    <div class="col-md-4">
-                        <label for="id_project" class="form-label">Project <span class="text-danger">*</span></label>
-                        <select name="project" id="id_project" class="form-select" required
-                            hx-get="{% url 'tasks_by_project' %}" hx-target="#id_task" hx-trigger="change"
-                            x-on:change="if($event.target.value === 'new') { showNewProject = true; } else { showNewProject = false; showNewTask = false; }">
-                            <option value="">Select Project</option>
-                            {% for project in projects %}
-                                <option value="{{ project.id }}" {% if running_entry.project and running_entry.project.id == project.id %}selected{% endif %}>
-                                    {{ project.name }}
-                                </option>
-                            {% endfor %}
-                            <option value="new">➕ Create New Project</option>
-                        </select>
-                        
-                        <!-- New Project Fields -->
-                        <div x-show="showNewProject" x-transition class="mt-2">
-                            <input type="text" name="new_project_name" class="form-control mb-2" placeholder="Project Name">
-                            <select name="new_project_client" class="form-select">
-                                <option value="">Select Client</option>
-                                {% for client in clients %}
-                                    <option value="{{ client.id }}">{{ client.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_task" class="form-label">Task</label>
-                        <select name="task" id="id_task" class="form-select"
-                            x-on:change="if($event.target.value === 'new') { showNewTask = true; } else { showNewTask = false; }">
-                            <option value="">Select Task (Optional)</option>
-                            {% for task in tasks %}
-                                <option value="{{ task.id }}" {% if running_entry.task and running_entry.task.id == task.id %}selected{% endif %}>
-                                    {{ task.name }}
-                                </option>
-                            {% endfor %}
-                            <option value="new">➕ Create New Task</option>
-                        </select>
-                        
-                        <!-- New Task Field -->
-                        <div x-show="showNewTask" x-transition class="mt-2">
-                            <input type="text" name="new_task_name" class="form-control" placeholder="Task Name">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_description" class="form-label">Description</label>
-                        <input type="text" name="description" id="id_description" class="form-control" 
-                               value="{{ running_entry.description }}" placeholder="What did you work on?">
-                    </div>
+    <!-- Statistics Dashboard -->
+    <div class="row stats-dashboard">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-gradient);">
+                    <i class="bi bi-clock"></i>
                 </div>
-                <button type="submit" class="btn btn-danger">Stop Timer & Save</button>
-            </form>
+                <h3 class="stat-number text-primary">{{ today_hours|floatformat:1 }}h</h3>
+                <p class="stat-label">Today's Time</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--success-gradient);">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <h3 class="stat-number text-success">{{ past_entries.count }}</h3>
+                <p class="stat-label">Total Entries</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--warning-gradient);">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h3 class="stat-number text-warning">{{ active_projects_count }}</h3>
+                <p class="stat-label">Active Projects</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--info-gradient);">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <h3 class="stat-number text-info">{{ week_hours|floatformat:1 }}h</h3>
+                <p class="stat-label">This Week</p>
+            </div>
         </div>
     </div>
-    {% else %}
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title">▶️ Quick Start Timer</h5>
-            <form method="post" action="{% url 'start_timer' %}" class="row g-2">
-                {% csrf_token %}
-                <div class="col-md-8">
-                    <input name="description" class="form-control" placeholder="What are you working on? (optional)">
+
+    <!-- Running Timer Section -->
+    {% if running_entry %}
+    <div class="running-timer-card">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-2">
+                            <i class="bi bi-record-circle me-2"></i>Currently Tracking
+                        </h4>
+                        <h3 class="fw-bold">{{ running_entry.project.name|default:"Untitled Project" }}</h3>
+                        <p class="mb-2 opacity-90">
+                            <i class="bi bi-list-task me-1"></i>
+                            {{ running_entry.task.name|default:"No specific task" }}
+                        </p>
+                        <p class="mb-3 opacity-90">{{ running_entry.description|default:"No description" }}</p>
+                        <small class="opacity-75">
+                            <i class="bi bi-clock me-1"></i>
+                            Started at {{ running_entry.start_time|date:"g:i A" }}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="progress-circle" style="--progress: {{ progress_percent }}">
+                            <div class="progress-inner">
+                                <div class="timer-display" id="live-timer">--:--:--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#discardModal">
+                        <i class="bi bi-x-circle me-2"></i>Discard
+                    </button>
+                    <a href="{% url 'tracker_home' %}#stop-timer" class="btn btn-light btn-lg">
+                        <i class="bi bi-stop-circle me-2"></i>Stop & Configure
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stop Timer Configuration -->
+    <div class="quick-start-card" id="stop-timer">
+        <h5 class="mb-3">
+            <i class="bi bi-gear me-2"></i>Configure Timer Settings
+        </h5>
+        <form method="post" action="{% url 'stop_timer' running_entry.id %}" x-data="{ showNewProject: false, showNewTask: false }">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="id_project" class="form-label">
+                        <i class="bi bi-folder me-1"></i>Project <span class="text-danger">*</span>
+                    </label>
+                    <select name="project" id="id_project" class="form-select" required
+                        hx-get="{% url 'tasks_by_project' %}" hx-target="#id_task" hx-swap="outerHTML" hx-trigger="change"
+                        x-on:change="if($event.target.value === 'new') { showNewProject = true; } else { showNewProject = false; showNewTask = false; }">
+                        <option value="">Select Project</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}" {% if running_entry.project and running_entry.project.id == project.id %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                        {% endfor %}
+                        <option value="new">➕ Create New Project</option>
+                    </select>
+                    
+                    <!-- New Project Fields -->
+                    <div x-show="showNewProject" x-transition class="mt-2">
+                        <input type="text" name="new_project_name" class="form-control mb-2" placeholder="Project Name">
+                        <select name="new_project_client" class="form-select">
+                            <option value="">Select Client</option>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <button class="btn btn-primary w-100">Start Timer</button>
+                    <label for="id_task" class="form-label">
+                        <i class="bi bi-list-task me-1"></i>Task
+                    </label>
+                    <select name="task" id="id_task" class="form-select"
+                        x-on:change="if($event.target.value === 'new') { showNewTask = true; } else { showNewTask = false; }">
+                        <option value="">Select Task (Optional)</option>
+                        {% for task in tasks %}
+                            <option value="{{ task.id }}" {% if running_entry.task and running_entry.task.id == task.id %}selected{% endif %}>
+                                {{ task.name }}
+                            </option>
+                        {% endfor %}
+                        <option value="new">➕ Create New Task</option>
+                    </select>
+                    
+                    <!-- New Task Field -->
+                    <div x-show="showNewTask" x-transition class="mt-2">
+                        <input type="text" name="new_task_name" class="form-control" placeholder="Task Name">
+                    </div>
                 </div>
-            </form>
-            <p class="text-muted mt-2 mb-0"><small>💡 You can select project and task when stopping the timer</small></p>
+                <div class="col-md-4">
+                    <label for="id_description" class="form-label">
+                        <i class="bi bi-card-text me-1"></i>Description
+                    </label>
+                    <input type="text" name="description" id="id_description" class="form-control" 
+                           value="{{ running_entry.description }}" placeholder="What did you work on?">
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-danger btn-lg me-3">
+                    <i class="bi bi-stop-circle me-2"></i>Stop Timer & Save Entry
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#discardModal">
+                    <i class="bi bi-x-circle me-2"></i>Discard Timer
+                </button>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <!-- Quick Start Timer -->
+    <div class="quick-start-card">
+        <div class="text-center mb-4">
+            <h4 class="mb-3">
+                <i class="bi bi-play-circle me-2"></i>Start Your Timer
+            </h4>
+            <p class="text-muted">Begin tracking your time instantly. You can configure project details when you stop.</p>
+        </div>
+        <form method="post" action="{% url 'start_timer' %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-8">
+                <label for="quick_description" class="form-label">
+                    <i class="bi bi-card-text me-1"></i>What are you working on?
+                </label>
+                <input name="description" id="quick_description" class="form-control form-control-lg" 
+                       placeholder="Brief description of your task...">
+            </div>
+            <div class="col-md-4 text-center">
+                <button class="btn btn-success btn-lg w-100">
+                    <i class="bi bi-play-circle me-2"></i>Start Timer
+                </button>
+            </div>
+        </form>
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                <i class="bi bi-lightbulb me-1"></i>
+                Pro tip: You can assign projects and tasks when stopping the timer
+            </small>
         </div>
     </div>
     {% endif %}
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>🕒 Recent Entries</h4>
-        <div>
-            <a href="{% url 'deleted_entries' %}" class="btn btn-outline-warning btn-sm me-2">
-                🗑️ Deleted Entries
-            </a>
-            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#manualEntryModal">
-                ➕ Add Manually
-            </button>
+    <!-- Recent Entries Section -->
+    <div class="recent-entries-section">
+        <div class="section-header">
+            <h4 class="mb-0">
+                <i class="bi bi-clock-history me-2"></i>Recent Time Entries
+            </h4>
+            <div>
+                <button class="btn btn-outline-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#manualEntryModal">
+                    <i class="bi bi-plus-circle me-1"></i>Add Manual Entry
+                </button>
+                <a href="{% url 'deleted_entries' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-trash me-1"></i>Deleted Entries
+                </a>
+            </div>
         </div>
-    </div>
 
-    {% regroup past_entries by start_time.date as date_groups %}
-    {% for group in date_groups %}
-        <h5 class="mt-4">{{ group.grouper }}</h5>
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th>Task</th>
-                    <th>Description</th>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Duration</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for entry in group.list %}
-                <tr>
-                    <td>{{ entry.project.name|default:"No project" }}</td>
-                    <td>{{ entry.task.name|default:"-" }}</td>
-                    <td>{{ entry.description|default:"-" }}</td>
-                    <td>{{ entry.start_time|date:"g:i A" }}</td>
-                    <td>{{ entry.end_time|date:"g:i A" }}</td>
-                    <td>{{ entry.duration_minutes }} min</td>
-                    <td>
-                        <button class="btn btn-outline-primary btn-sm" 
-                                hx-get="{% url 'edit_entry' entry.id %}"
-                                hx-target="#editModal .modal-content"
-                                hx-trigger="click"
-                                data-bs-toggle="modal"
-                                data-bs-target="#editModal">
-                            ✏️ Edit
-                        </button>
-                        {% if entry.project %}
-                        <form method="post" action="{% url 'continue_entry' entry.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <button class="btn btn-outline-success btn-sm">Continue</button>
-                        </form>
-                        <form method="post" action="{% url 'duplicate_entry' entry.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <button class="btn btn-outline-secondary btn-sm">Duplicate</button>
-                        </form>
-                        {% endif %}
-                        <button class="btn btn-outline-danger btn-sm" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#deleteModal"
-                                data-entry-id="{{ entry.id }}"
-                                data-entry-description="{{ entry.description|default:'this entry' }}">
-                            🗑️ Delete
-                        </button>
-                    </td>
-                </tr>
+        {% if past_entries %}
+            {% regroup past_entries by start_time.date as date_groups %}
+            {% for group in date_groups %}
+            <div class="date-group">
+                <div class="date-header">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    {{ group.grouper|date:"l, F j, Y" }}
+                </div>
+                <div class="entries-container">
+                    {% for entry in group.list %}
+                    <div class="entry-card">
+                        <div class="entry-header">
+                            <div>
+                                <h6 class="entry-title">{{ entry.project.name|default:"No Project" }}</h6>
+                                <p class="entry-project">
+                                    {% if entry.task %}
+                                        <i class="bi bi-list-task me-1"></i>{{ entry.task.name }}
+                                    {% else %}
+                                        <i class="bi bi-dash-circle me-1"></i>No specific task
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <div class="duration-badge">
+                                    <i class="bi bi-clock me-1"></i>{{ entry.duration_minutes }} min
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="entry-meta">
+                            {% if entry.description %}
+                            <p class="mb-2">
+                                <i class="bi bi-card-text me-1 text-muted"></i>
+                                {{ entry.description }}
+                            </p>
+                            {% endif %}
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Start Time</small>
+                                    <div class="time-badge">{{ entry.start_time|date:"g:i A" }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">End Time</small>
+                                    <div class="time-badge">{{ entry.end_time|date:"g:i A" }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="entry-actions">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button class="btn btn-outline-primary btn-sm me-2" 
+                                            hx-get="{% url 'edit_entry' entry.id %}"
+                                            hx-target="#editModal .modal-content"
+                                            hx-trigger="click"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editModal">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </button>
+                                    {% if entry.project %}
+                                    <form method="post" action="{% url 'continue_entry' entry.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-success btn-sm me-2">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>Continue
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'duplicate_entry' entry.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-info btn-sm me-2">
+                                            <i class="bi bi-files me-1"></i>Duplicate
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal"
+                                            data-entry-id="{{ entry.id }}"
+                                            data-entry-description="{{ entry.description|default:'this entry' }}">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             {% endfor %}
-            </tbody>
-        </table>
-    {% endfor %}
+        {% else %}
+            <div class="entries-container">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Time Entries Yet</h4>
+                    <p class="text-muted mb-4">
+                        Start your first timer to begin tracking your productive time.
+                    </p>
+                    <button class="btn btn-primary btn-lg" onclick="document.getElementById('quick_description')?.focus()">
+                        <i class="bi bi-play-circle me-2"></i>Start Your First Timer
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Floating Action Buttons -->
+<div class="floating-actions">
+    {% if running_entry %}
+    <button class="floating-btn" style="background: var(--danger-gradient);" 
+            data-bs-toggle="modal" data-bs-target="#discardModal"
+            data-bs-toggle="tooltip" data-bs-placement="left" title="Discard Timer">
+        <i class="bi bi-x-circle"></i>
+    </button>
+    <a href="{% url 'tracker_home' %}#stop-timer" class="floating-btn primary text-decoration-none"
+       data-bs-toggle="tooltip" data-bs-placement="left" title="Stop & Configure">
+        <i class="bi bi-stop-circle"></i>
+    </a>
+    {% else %}
+    <button class="floating-btn primary" data-bs-toggle="tooltip" data-bs-placement="left" title="Quick Timer" 
+            onclick="document.getElementById('quick_description')?.focus()">
+        <i class="bi bi-play-circle"></i>
+    </button>
+    {% endif %}
+    <button class="floating-btn success" data-bs-toggle="modal" data-bs-target="#manualEntryModal"
+            data-bs-toggle="tooltip" data-bs-placement="left" title="Manual Entry">
+        <i class="bi bi-plus-circle"></i>
+    </button>
+    <a href="{% url 'audit_logs' %}" class="floating-btn warning text-decoration-none"
+       data-bs-toggle="tooltip" data-bs-placement="left" title="View Logs">
+        <i class="bi bi-journal-text"></i>
+    </a>
 </div>
 
 <!-- Manual Entry Modal -->
 <div class="modal fade" id="manualEntryModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="{% url 'submit_manual_entry' %}">
-        {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title">➕ Manual Time Entry</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'submit_manual_entry' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>Add Manual Time Entry
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hourly Rate</label>
+                            {{ form.hourly_rate }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Save Entry
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="modal-body">
-          {{ form.as_p }}
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Save Entry</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
+
+<!-- Discard Timer Confirmation Modal -->
+{% if running_entry %}
+<div class="modal fade" id="discardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Discard Timer?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div style="font-size: 3rem; color: #f39c12;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <div class="text-center mb-3">
+                    <h6>Current Timer Session</h6>
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Duration:</strong><br>
+                                <span id="discard-timer-duration">--:--:--</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Started:</strong><br>
+                                {{ running_entry.start_time|date:"g:i A" }}
+                            </div>
+                        </div>
+                        {% if running_entry.description %}
+                        <div class="mt-2">
+                            <strong>Description:</strong> {{ running_entry.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="text-center">
+                    Are you sure you want to <strong>discard this timer</strong>? 
+                </p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action will permanently delete your current timer session. 
+                    No time will be saved or tracked.
+                </div>
+                <p class="text-center text-muted">
+                    <small>If you want to save this time, click "Cancel" and use "Stop & Configure" instead.</small>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-2"></i>Cancel - Keep Timer
+                </button>
+                <form method="post" action="{% url 'discard_timer' running_entry.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-trash me-2"></i>Yes, Discard Timer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">🗑️ Confirm Delete</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to delete <strong id="entryDescription">this entry</strong>?</p>
-        <p class="text-muted">Don't worry, this is a soft delete - you can restore it later from the deleted entries page.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <form id="deleteForm" method="post" class="d-inline">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete Entry</button>
-        </form>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div style="font-size: 3rem; color: #dc3545;">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                </div>
+                <p class="text-center">
+                    Are you sure you want to delete <strong id="entryDescription">this entry</strong>?
+                </p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Don't worry! This is a soft delete - you can restore it later from the deleted entries page.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete Entry
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Edit Entry Modal -->
 <div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <!-- Content will be loaded here via HTMX -->
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 
@@ -270,19 +863,255 @@ if (deleteModal) {
 }
 
 {% if running_entry %}
-// Live timer
+// Live timer functionality
 const start = new Date("{{ running_entry.start_time|date:'Y-m-d H:i:s' }}");
-setInterval(() => {
+
+function updateTimer() {
     const now = new Date();
     const diff = Math.floor((now - start) / 1000);
     const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
     const min = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
     const sec = String(diff % 60).padStart(2, '0');
+    
     const timerElement = document.getElementById('live-timer');
     if (timerElement) {
         timerElement.textContent = `${hrs}:${min}:${sec}`;
     }
-}, 1000);
+    
+    // Update discard modal timer display
+    const discardTimerElement = document.getElementById('discard-timer-duration');
+    if (discardTimerElement) {
+        discardTimerElement.textContent = `${hrs}:${min}:${sec}`;
+    }
+    
+    // Update progress circle
+    const minutes = Math.floor(diff / 60);
+    const progress = Math.min((minutes / 480) * 100, 100); // 8 hours = 480 minutes
+    document.querySelector('.progress-circle').style.setProperty('--progress', progress);
+}
+
+// Update timer immediately and then every second
+updateTimer();
+setInterval(updateTimer, 1000);
+
+// Add pulsing effect to running timer
+const runningCard = document.querySelector('.running-timer-card');
+if (runningCard) {
+    setInterval(() => {
+        runningCard.style.boxShadow = 'var(--shadow-xl), 0 0 30px rgba(56, 239, 125, 0.4)';
+        setTimeout(() => {
+            runningCard.style.boxShadow = 'var(--shadow-xl), 0 0 20px rgba(56, 239, 125, 0.2)';
+        }, 1000);
+    }, 2000);
+}
+
+// Discard modal enhancements
+const discardModal = document.getElementById('discardModal');
+if (discardModal) {
+    discardModal.addEventListener('show.bs.modal', function() {
+        // Update timer duration when modal is shown
+        updateTimer();
+        
+        // Focus on cancel button by default for safety
+        setTimeout(() => {
+            const cancelButton = discardModal.querySelector('.btn-outline-secondary');
+            if (cancelButton) cancelButton.focus();
+        }, 300);
+    });
+    
+    // Add keyboard shortcut: Escape to close discard modal
+    discardModal.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            bootstrap.Modal.getInstance(discardModal).hide();
+        }
+    });
+}
+
+// Warn user before leaving page if timer is running
+window.addEventListener('beforeunload', function(e) {
+    const message = 'You have a timer running. Are you sure you want to leave?';
+    e.returnValue = message;
+    return message;
+});
 {% endif %}
+
+// Smooth scrolling for internal links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// Auto-save form data to prevent loss
+const forms = document.querySelectorAll('form');
+forms.forEach(form => {
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        // Load saved data
+        const savedValue = localStorage.getItem(`timer_${input.name}`);
+        if (savedValue && !input.value) {
+            input.value = savedValue;
+        }
+        
+        // Save data on change
+        input.addEventListener('change', () => {
+            localStorage.setItem(`timer_${input.name}`, input.value);
+        });
+    });
+    
+    // Clear saved data on form submit
+    form.addEventListener('submit', () => {
+        inputs.forEach(input => {
+            localStorage.removeItem(`timer_${input.name}`);
+        });
+    });
+});
+
+// Enhanced notifications for timer actions
+function showTimerNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: var(--shadow-lg);';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            const bsAlert = new bootstrap.Alert(notification);
+            bsAlert.close();
+        }
+    }, 4000);
+}
+
+// Quick timer start with Enter key
+document.getElementById('quick_description')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        this.closest('form').submit();
+    }
+});
+
+// Floating action button tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Enhanced HTMX integration
+document.body.addEventListener('htmx:beforeRequest', function(evt) {
+    const target = evt.target;
+    if (target.tagName === 'BUTTON') {
+        const originalText = target.innerHTML;
+        target.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        target.disabled = true;
+        
+        // Store original text for restoration
+        target.dataset.originalText = originalText;
+    }
+});
+
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    const target = evt.target;
+    if (target.tagName === 'BUTTON' && target.dataset.originalText) {
+        target.innerHTML = target.dataset.originalText;
+        target.disabled = false;
+        delete target.dataset.originalText;
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + Shift + S: Start timer
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        const startButton = document.querySelector('button[type="submit"]:not([disabled])');
+        if (startButton && !document.querySelector('.running-timer-card')) {
+            document.getElementById('quick_description')?.focus();
+        }
+    }
+    
+    // Ctrl/Cmd + Shift + D: Discard timer (only when timer is running)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        {% if running_entry %}
+        const discardModal = document.getElementById('discardModal');
+        if (discardModal) {
+            const modal = new bootstrap.Modal(discardModal);
+            modal.show();
+        }
+        {% endif %}
+    }
+    
+    // Ctrl/Cmd + Shift + M: Manual entry
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+        e.preventDefault();
+        const manualModal = new bootstrap.Modal(document.getElementById('manualEntryModal'));
+        manualModal.show();
+    }
+    
+    // Escape: Close modals
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal.show');
+        openModals.forEach(modal => {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) bsModal.hide();
+        });
+    }
+});
+
+// Page visibility API to handle timer when tab is hidden
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        // Page became visible, update timer immediately
+        {% if running_entry %}
+        updateTimer();
+        {% endif %}
+    }
+});
 </script>
 {% endblock %}
+                            <label class="form-label">Project <span class="text-danger">*</span></label>
+                            {{ form.project }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Task</label>
+                            {{ form.task }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                            {{ form.start_time }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Time <span class="text-danger">*</span></label>
+                            {{ form.end_time }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.billable }}
+                                <label class="form-check-label">Billable Time</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">

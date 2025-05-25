@@ -1,45 +1,619 @@
 {% extends 'base.html' %}
-{% block title %}Tasks{% endblock %}
+{% block title %}Tasks - MyTimerApp{% endblock %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item active">Tasks</li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'project_list' %}">
+            <i class="bi bi-folder me-1"></i>Projects
+        </a>
+    </li>
+    <li class="breadcrumb-item active">
+        <i class="bi bi-list-task me-1"></i>Tasks
+    </li>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-header {
+        background: var(--success-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin: -1.5rem -15px 2rem -15px;
+        border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
+    }
+    
+    .task-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        border: none;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .task-status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+    }
+    
+    .task-header {
+        padding: 1.25rem 1.5rem 1rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+    
+    .task-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+    }
+    
+    .task-project {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    .task-meta {
+        padding: 0 1.5rem 1.25rem;
+    }
+    
+    .task-actions {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .priority-high { background: var(--danger-gradient); }
+    .priority-medium { background: var(--warning-gradient); }
+    .priority-low { background: var(--info-gradient); }
+    .priority-none { background: #e9ecef; }
+    
+    .estimated-time {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .task-status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-active {
+        background: rgba(17, 153, 142, 0.1);
+        color: #11998e;
+        border: 1px solid rgba(17, 153, 142, 0.3);
+    }
+    
+    .status-inactive {
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.3);
+    }
+    
+    .task-progress {
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .task-progress-bar {
+        height: 100%;
+        background: var(--success-gradient);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    .create-button {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--success-gradient);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .create-button:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-xl);
+        color: white;
+    }
+    
+    .tasks-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 0.5rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .filter-tab {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        border: none;
+        background: transparent;
+        border-radius: var(--border-radius);
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .filter-tab.active {
+        background: var(--success-gradient);
+        color: white;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .filter-tab:hover:not(.active) {
+        background: #f8f9fa;
+        color: #495057;
+    }
+    
+    @media (max-width: 768px) {
+        .tasks-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .create-button {
+            bottom: 1rem;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+            font-size: 1.25rem;
+        }
+        
+        .page-header {
+            padding: 1.5rem 0;
+            margin: -1rem -15px 2rem -15px;
+        }
+        
+        .filter-tabs {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Tasks</title>
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-<div class="container py-5">
-    <h2>Tasks</h2>
-    <button class="btn btn-primary mb-3" hx-get="{% url 'task_create_modal' %}" hx-target="#modal-body" hx-trigger="click" data-bs-toggle="modal" data-bs-target="#modal">+ New Task</button>
-
-    <table class="table table-striped">
-        <thead><tr><th>Project</th><th>Name</th><th>Estimated Minutes</th><th>Active</th></tr></thead>
-        <tbody id="tasks-table">
-            {% for task in tasks %}
-                {% include "projects/partials/task_row.html" %}
-            {% empty %}
-                <tr><td colspan="4">No tasks</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content" id="modal-body">
-      <!-- HTMX will inject form here -->
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-2">
+                    <i class="bi bi-list-task me-3"></i>Task Management
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Track and organize your project tasks efficiently
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div style="font-size: 4rem; opacity: 0.3;">
+                    <i class="bi bi-check2-square"></i>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
-</body>
-</html>
+
+<div class="container">
+    <!-- Statistics Row -->
+    <div class="row stats-row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--success-gradient);">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <h3 class="stat-number text-success">{{ tasks.count }}</h3>
+                <p class="stat-label">Total Tasks</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-gradient);">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <h3 class="stat-number text-primary">{{ active_tasks_count }}</h3>
+                <p class="stat-label">Active Tasks</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--warning-gradient);">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <h3 class="stat-number text-warning">{{ total_estimated_minutes }}</h3>
+                <p class="stat-label">Est. Minutes</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--info-gradient);">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h3 class="stat-number text-info">{{ unique_projects_count }}</h3>
+                <p class="stat-label">Projects</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">
+            <i class="bi bi-list me-2"></i>All Tasks
+        </button>
+        <button class="filter-tab" data-filter="active">
+            <i class="bi bi-play-circle me-2"></i>Active
+        </button>
+        <button class="filter-tab" data-filter="inactive">
+            <i class="bi bi-pause-circle me-2"></i>Inactive
+        </button>
+        <button class="filter-tab" data-filter="high-priority">
+            <i class="bi bi-exclamation-triangle me-2"></i>High Priority
+        </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-filter-bar mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search tasks..." id="searchTasks">
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <select class="form-select" id="filterProject">
+                    <option value="">All Projects</option>
+                    {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Grid -->
+    {% if tasks %}
+        <div class="tasks-container" id="tasksGrid">
+            {% for task in tasks %}
+            <div class="task-card" 
+                 data-status="{{ task.is_active|yesno:'active,inactive' }}"
+                 data-project="{{ task.project.id }}"
+                 data-name="{{ task.name|lower }}"
+                 data-priority="medium">
+                
+                <div class="task-status-bar priority-medium"></div>
+                
+                <div class="task-header">
+                    <div>
+                        <h6 class="task-title">{{ task.name }}</h6>
+                        <p class="task-project">
+                            <i class="bi bi-folder me-1"></i>
+                            {{ task.project.name }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <span class="task-status-badge {{ task.is_active|yesno:'status-active,status-inactive' }}">
+                            {{ task.is_active|yesno:'Active,Inactive' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="task-meta">
+                    <div class="row align-items-center mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Estimated Time</small>
+                            <div class="estimated-time">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ task.estimated_minutes }} min
+                            </div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">Progress</small>
+                            <div class="text-success fw-bold">65%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-progress">
+                        <div class="task-progress-bar" style="width: 65%;"></div>
+                    </div>
+                    
+                    <div class="row text-center mt-3">
+                        <div class="col-4">
+                            <div class="small text-muted">Time Logged</div>
+                            <div class="fw-bold text-primary">2.5h</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Remaining</div>
+                            <div class="fw-bold text-warning">1.2h</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Entries</div>
+                            <div class="fw-bold text-info">8</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-actions">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2">
+                                <i class="bi bi-play me-1"></i>Start Timer
+                            </button>
+                            <button class="btn btn-outline-success btn-sm me-2">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                        </div>
+                        <div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                        type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="bi bi-eye me-2"></i>View Details
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="bi bi-copy me-2"></i>Duplicate
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" 
+                                           onclick="confirmDelete('{{ task.id }}', '{{ task.name }}')">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-list-task"></i>
+            </div>
+            <h4 class="text-muted mb-3">No Tasks Yet</h4>
+            <p class="text-muted mb-4">
+                Create your first task to start organizing your project work.
+            </p>
+            <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modal">
+                <i class="bi bi-plus-circle me-2"></i>Create First Task
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Floating Create Button -->
+<button class="create-button" data-bs-toggle="modal" data-bs-target="#modal" 
+        hx-get="{% url 'task_create_modal' %}" hx-target="#modal-body" 
+        data-bs-toggle="tooltip" data-bs-placement="left" title="Create New Task">
+    <i class="bi bi-plus"></i>
+</button>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade" id="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="modal-body">
+            <!-- HTMX will inject form here -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div style="font-size: 3rem; color: #dc3545;">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                </div>
+                <p class="text-center">
+                    Are you sure you want to delete the task 
+                    <strong id="deleteTaskName"></strong>?
+                </p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This action cannot be undone. All associated time entries will also be affected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete Task
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Filter functionality
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // Update active tab
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filter = this.getAttribute('data-filter');
+        const taskCards = document.querySelectorAll('.task-card');
+        
+        taskCards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const cardPriority = card.getAttribute('data-priority');
+            
+            let show = false;
+            
+            switch(filter) {
+                case 'all':
+                    show = true;
+                    break;
+                case 'active':
+                    show = cardStatus === 'active';
+                    break;
+                case 'inactive':
+                    show = cardStatus === 'inactive';
+                    break;
+                case 'high-priority':
+                    show = cardPriority === 'high';
+                    break;
+            }
+            
+            card.style.display = show ? 'block' : 'none';
+        });
+    });
+});
+
+// Search functionality
+document.getElementById('searchTasks').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const taskCards = document.querySelectorAll('.task-card');
+    
+    taskCards.forEach(card => {
+        const taskName = card.getAttribute('data-name');
+        if (taskName.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// Project filter
+document.getElementById('filterProject').addEventListener('change', function(e) {
+    const selectedProject = e.target.value;
+    const taskCards = document.querySelectorAll('.task-card');
+    
+    taskCards.forEach(card => {
+        const cardProject = card.getAttribute('data-project');
+        if (selectedProject === '' || cardProject === selectedProject) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// Delete confirmation
+function confirmDelete(taskId, taskName) {
+    document.getElementById('deleteTaskName').textContent = taskName;
+    document.getElementById('deleteForm').action = `/tasks/delete/${taskId}/`;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Animate progress bars on scroll
+const observerOptions = {
+    threshold: 0.5,
+    rootMargin: '0px 0px -100px 0px'
+};
+
+const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const progressBar = entry.target.querySelector('.task-progress-bar');
+            if (progressBar) {
+                const width = progressBar.style.width;
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressBar.style.width = width;
+                }, 100);
+            }
+        }
+    });
+}, observerOptions);
+
+// Observe all task cards
+document.querySelectorAll('.task-card').forEach(card => {
+    observer.observe(card);
+});
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Add task completion animation
+function toggleTaskStatus(taskId) {
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (taskCard) {
+        taskCard.style.transform = 'scale(0.95)';
+        taskCard.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            taskCard.style.transform = 'scale(1)';
+            taskCard.style.opacity = '1';
+            showNotification('Task status updated!', 'success');
+        }, 200);
+    }
+}
+</script>
 {% endblock %}
